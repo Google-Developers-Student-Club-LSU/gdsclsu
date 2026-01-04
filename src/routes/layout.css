@@ -1,0 +1,45 @@
+@import 'tailwindcss';
+
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-background-light: #f8f9fa;
+  --color-background-secondary-light: #ffffff;
+  --color-primary-color: #9f86ff;
+  --color-primary-container: #553f5d;
+  --color-secondary-container: #45455a;
+  --color-primary-text: #1c1b1d;
+  --shadow-primary: 0 35px 35px var(--color-primary-color);
+}
+
+.dark {
+  --color-background-dark: #212121;
+  --color-background-secondary-dark: #373740;
+  --color-primary-color: #9f86ff;
+  --color-primary-container: #553f5d;
+  --color-secondary-container: #45455a;
+  --color-primary-text-dark: #ffffff;
+}
+
+@layer base {
+  :root{
+    font-family: 'Google Sans', sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 300;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    user-select: none;
+    min-width: 0px;
+  }
+}
