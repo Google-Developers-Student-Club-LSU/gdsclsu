@@ -1,4 +1,4 @@
-<div class="blobContainer flex items-center justify-center">
+<div class="blobContainer flex items-center justify-center max-w-screen">
   <div class="b1"></div>
   <div class="b2"></div>
   <div class="b3"></div>
@@ -9,7 +9,7 @@
   .blobContainer {
     filter: blur(60px);
     height: 70vh;
-    width: 90%;
+    width: 100%;
     z-index: -1;
   }
 

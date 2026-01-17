@@ -12,10 +12,12 @@
 	let { children } = $props();
 </script>
 
-<div class="grid min-h-dvh place-items-center gap-10 grid-template-rows-[auto]">
-	<Header/>
-	<main use:lenis>
-		{@render children()}
-	</main>
+<Header/>
+<div class="min-h-dvh flex flex-col justify-between item-center">
+	<div class="grid min-h-dvh place-items-center gap-10 grid-template-rows-[auto]">
+		<main use:lenis>
+			{@render children()}
+		</main>
+	</div>
 	<Footer/>
 </div>

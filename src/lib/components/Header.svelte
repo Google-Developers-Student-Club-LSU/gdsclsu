@@ -11,7 +11,7 @@
   });
 </script>
 
-<div class="flex items-center justify-between p-6 rounded-bl-lg rounded-br-lg w-full z-10 h-auto">
+<div class="flex items-center justify-between p-6 rounded-bl-lg rounded-br-lg w-full z-10 h-auto absolute">
   <div class="flex items-center gap-4">
     <a href="/">
       <img src={gdscLogo} alt="GDG Logo" class="h-8 w-12" />
