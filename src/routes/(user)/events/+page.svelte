@@ -1,7 +1,10 @@
 <script lang="ts">
+    import Calendar from '$lib/components/Calendar.svelte';
+
   let { form } = $props();
 </script>
 
+<!--
 <article>
     <div class="card card-body tw-container tw-mt-20 tw-mb-5">
         <h1 class="tw-text-5xl tw-font-bold tw-text-center tw-mt-5 tw-mb-10">Log In</h1>
@@ -23,3 +26,5 @@
         </form>
     </div>
 </article>
+-->
+<Calendar/>
