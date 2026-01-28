@@ -1,11 +1,13 @@
-
 <script lang="ts">
   import { onMount } from "svelte";
 
-  import Lillian from "$lib/assets/Lillian.png";
-  import Malik from "$lib/assets/Malik.jpg";
-  import Thomas from "$lib/assets/Thomas.jpeg";
-  import Quentin from "$lib/assets/Quentin.jpg";
+  import Lillian from "$lib/assets/Lillian.webp";
+  import Malik from "$lib/assets/Malik.webp";
+  import Thomas from "$lib/assets/Thomas.webp";
+  import Quentin from "$lib/assets/Quentin.webp";
+  import Andy from "$lib/assets/Andy.webp";
+  import Daniel from "$lib/assets/Daniel.webp";
+  import Dina from "$lib/assets/Dina.webp";
   
 
   onMount(() => {
@@ -50,11 +52,14 @@
   }) 
 </script>
 
-<div id="track" data-mouse-down-at="0" data-prev-percentage="0" data-percentage="0" class="flex justify-center align-center">
+<div id="track" data-mouse-down-at="0" data-prev-percentage="0" data-percentage="0" class="flex justify-center align-center translate-x-[100%]">
   <img src={Lillian} alt="Lillian" class="image"/>
   <img src={Malik} alt="Malik" class="image"/>
   <img src={Quentin} alt="Quentin" class="image"/>
   <img src={Thomas} alt="Thomas" class="image"/>
+  <img src={Andy} alt="Andy" class="image"/>
+  <img src={Daniel} alt="Daniel" class="image"/>
+  <img src={Dina} alt="Dina" class="image"/>
 </div>
 
 <style>
@@ -66,7 +71,7 @@
   }
 
   #track {
-    width: 40vh;
+    width: 30vh;
     display: flex;
     gap: 4vmin;
     user-select: none;

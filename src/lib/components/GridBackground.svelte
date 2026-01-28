@@ -1,20 +1,10 @@
-<script lang="ts">
-  export let color: 'blue' | 'purple' | 'orange' = 'blue';
-  
-  const colors = {
-    blue: { light: '#dbeafe', dark: '#bfdbfe' },
-    purple: { light: '#f3e8ff', dark: '#e9d5ff' },
-    orange: { light: '#fed7aa', dark: '#fdba74' }
-  };
-</script>
-
 <div class="fixed inset-0 -z-10 bg-white overflow-hidden">
   <div class="stripes-container">
     {#each Array(12) as _, i}
       <div 
         class="stripe"
         style="
-          background: linear-gradient(135deg, {colors[color].light} 0%, {colors[color].dark} 100%);
+          background: linear-gradient(135deg, #f3e8ff} 0%, #e9d5ff 100%);
           left: {i * 10 - 10}%;
           animation-delay: {i * 0.2}s;
         "

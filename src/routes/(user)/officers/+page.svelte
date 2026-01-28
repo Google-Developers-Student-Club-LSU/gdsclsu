@@ -4,7 +4,7 @@
 </script>
 
 <div class="grid min-h-dvh place-items-center gap-10 grid-template-rows-[auto]">
-  <div class="align-center flex flex-col justify-center">
+  <div class="flex flex-col">
     <GridBackground></GridBackground>
     <ImageTrack></ImageTrack>
   </div>
