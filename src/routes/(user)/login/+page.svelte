@@ -1,29 +1,59 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { enhance } from '$app/forms';
+  import type { PageData } from './$types';
 
-  let { form } = $props();
+  let { form, data }: { form: any; data: PageData } = $props();
 </script>
 
-<div class="grid min-h-dvh place-items-center gap-10 grid-template-rows-[auto]">
-    <article>
-        <div class="card card-body container mt-20 mb-5 justify-center align-center">
-            <h1 class="text-5xl font-bold text-center mt-5 mb-10">Log In</h1>
-            {#if form?.error}
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <span>{form.error}</span>
-                </div>
-            {/if}
-            <form method="POST" action="?/login">
-                <div class="mb-4">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" name="email" id="email" class="form-control" placeholder="Email address" autocomplete="email" required />
-                </div>
-                <div class="mb-4">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" name="password" id="password" placeholder="Enter password" autocomplete="new-password" required />
-                </div>
-                <input type="submit" value="Log In" class="btn text-white" />
-            </form>
+<div class="min-h-screen flex items-center justify-center px-4">
+  <div class="w-full max-w-md">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+      <h1 class="text-4xl font-bold text-center mb-8 text-gray-900 dark:text-white">Log In</h1>
+      
+      {#if form?.error}
+        <div class="mb-4 p-4 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 rounded" role="alert">
+          <span>{form.error}</span>
         </div>
-    </article>
+      {/if}
+
+      <form method="POST" action="?/login" use:enhance>
+        <div class="mb-4">
+          <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Email
+          </label>
+          <input
+            type="email"
+            name="email"
+            id="email"
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-color focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            placeholder="Email address"
+            autocomplete="email"
+            required
+          />
+        </div>
+        
+        <div class="mb-6">
+          <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Password
+          </label>
+          <input
+            type="password"
+            name="password"
+            id="password"
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-color focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            placeholder="Enter password"
+            autocomplete="current-password"
+            required
+          />
+        </div>
+        
+        <button
+          type="submit"
+          class="w-full bg-primary-color hover:bg-opacity-90 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200"
+        >
+          Log In
+        </button>
+      </form>
+    </div>
+  </div>
 </div>

@@ -3,6 +3,14 @@
 
   import gdscLogo from "$lib/assets/GDSC.png";
 
+  interface User {
+    uid: string;
+    email: string | null;
+    emailVerified: boolean;
+  }
+
+  let { user }: { user: User | null } = $props();
+
   onMount(() => {
     document.getElementById("theme-toggle")?.addEventListener("click", () => {
       document.body.classList.toggle("dark");
@@ -28,7 +36,9 @@
     <a href="/events">Events</a>
     <a href="/officers">Officers</a>
     <a href="/sponsor">Sponsor</a>
-    <a href="/taskboard">Taskboard</a>
+    {#if user}
+      <a href="/taskboard">Taskboard</a>
+    {/if}
     <a href="/login">Login</a>
   </div>
 </div>

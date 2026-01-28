@@ -2,9 +2,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
-  import dina from "$lib/assets/Dina.jpg";
-  import hudson from "$lib/assets/Hudson.png";
-  import parallel from "$lib/assets/Parallel.png";
+  import Lillian from "$lib/assets/Lillian.png";
+  import Malik from "$lib/assets/Malik.jpg";
+  import Thomas from "$lib/assets/Thomas.jpeg";
+  import Quentin from "$lib/assets/Quentin.jpg";
+  
 
   onMount(() => {
     const track = document.getElementById("track");
@@ -49,9 +51,10 @@
 </script>
 
 <div id="track" data-mouse-down-at="0" data-prev-percentage="0" data-percentage="0" class="flex justify-center align-center">
-  <img src={hudson} alt="parallel" class="image"/>
-  <img src={hudson} alt="parallel" class="image"/>
-  <img src={hudson} alt="parallel" class="image"/>
+  <img src={Lillian} alt="Lillian" class="image"/>
+  <img src={Malik} alt="Malik" class="image"/>
+  <img src={Quentin} alt="Quentin" class="image"/>
+  <img src={Thomas} alt="Thomas" class="image"/>
 </div>
 
 <style>

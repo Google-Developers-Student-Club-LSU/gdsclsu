@@ -3,6 +3,14 @@
     
     type ViewType = 'week' | 'month';
     type Event = { id: string; title: string; description?: string; date: string; startTime: string; endTime: string; color: string; }
+    
+    interface User {
+        uid: string;
+        email: string | null;
+        emailVerified: boolean;
+    }
+    
+    let { user }: { user: User | null } = $props();
 
     let timeLabels: HTMLDivElement | undefined = $state(undefined);
     let calendarBody: HTMLDivElement | undefined = $state(undefined);
@@ -238,7 +246,9 @@
     }
 
     function setupEventListeners() {
-        addEventBtn?.addEventListener('click', () => openEventModal())
+        if (user) {
+            addEventBtn?.addEventListener('click', () => openEventModal())
+        }
         todayBtn?.addEventListener('click', goToToday)
         clearBtn?.addEventListener('click', clearAllEvents)
         cancelBtn?.addEventListener('click', closeEventModal)
@@ -532,7 +542,9 @@
     </div>
 
     <div class="controls">
-        <button class="btn btn-primary" id="addEventBtn" bind:this={addEventBtn}>+ Add Event</button>
+        {#if user}
+            <button class="btn btn-primary" id="addEventBtn" bind:this={addEventBtn}>+ Add Event</button>
+        {/if}
         <button class="btn btn-primary" id="todayBtn" bind:this={todayBtn}>Today</button>
         <button class="btn btn-primary" id="clearBtn" bind:this={clearBtn}>Clear All</button>
     </div>

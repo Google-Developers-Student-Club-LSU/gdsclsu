@@ -23,8 +23,5 @@
       <h1 class="text-primary-text-light dark:text-primary-text-dark text-9xl">GDSC LSU</h1>
     </div>
 
-    <div>
-      <h1 class="text-primary-text-dark text-9xl"> Our socials </h1>
-    </div>
   </div>
 </div>
