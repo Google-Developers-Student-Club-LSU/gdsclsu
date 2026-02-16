@@ -7,6 +7,7 @@
     interface User {
         uid: string;
         email: string | null;
+        permissions: string[];
         emailVerified: boolean;
     }
     
@@ -16,12 +17,9 @@
     let calendarBody: HTMLDivElement | undefined = $state(undefined);
     let addEventBtn: HTMLButtonElement | undefined = $state(undefined);
     let todayBtn: HTMLButtonElement | undefined = $state(undefined);
-    let clearBtn: HTMLButtonElement | undefined = $state(undefined);
     let cancelBtn: HTMLButtonElement | undefined = $state(undefined);
-    let saveBtn: HTMLButtonElement | undefined = $state(undefined);
     let eventForm: HTMLFormElement | undefined = $state(undefined);
     let eventModal: HTMLDivElement | undefined = $state(undefined);
-    let detailModal: HTMLDivElement | undefined = $state(undefined);
     let modalTitle: HTMLHeadingElement | undefined = $state(undefined);
     let eventTitle: HTMLInputElement | undefined = $state(undefined);
     let eventDate: HTMLInputElement | undefined = $state(undefined);
@@ -388,7 +386,6 @@
             addEventBtn?.addEventListener('click', () => openEventModal())
         }
         todayBtn?.addEventListener('click', goToToday)
-        clearBtn?.addEventListener('click', clearAllEvents)
         cancelBtn?.addEventListener('click', closeEventModal)
         prevBtn?.addEventListener('click', () => navigateDate('prev'))
         nextBtn?.addEventListener('click', () => navigateDate('next'))
@@ -539,13 +536,6 @@
         eventElement.style.left = `${dayIndex * slotWidthPct + 0.5}%`;
         eventElement.style.width = `${slotWidthPct - 1}%`;
 
-        eventElement.addEventListener('dblclick', (e) => {
-            e.stopPropagation();
-            if (confirm(`Delete "${event.title}"?`)) {
-                deleteEvent(event.id);
-            }
-        });
-
         eventElement.addEventListener('click', (e) => {
             e.stopPropagation();
             openDetailModal(event);
@@ -578,26 +568,7 @@
             openDetailModal(event);
         });
 
-        eventElement.addEventListener('dblclick', (e) => {
-            e.stopPropagation();
-            if (confirm(`Delete "${event.title}"?`)) {
-                deleteEvent(event.id);
-            }
-        });
-
         eventsContainer.appendChild(eventElement);
-    }
-
-    function deleteEvent(eventId: string) {
-        events = events.filter(event => event.id !== eventId);
-        renderEvents();
-    }
-
-    function clearAllEvents() {
-        if (events.length > 0 && confirm('Are you sure you want to clear all events?')) {
-            events = [];
-            renderEvents();
-        }
     }
 
     function renderCalendar() {
@@ -684,7 +655,6 @@
             <button class="btn btn-primary" id="addEventBtn" bind:this={addEventBtn}>+ Add Event</button>
         {/if}
         <button class="btn btn-primary" id="todayBtn" bind:this={todayBtn}>Today</button>
-        <button class="btn btn-primary" id="clearBtn" bind:this={clearBtn}>Clear All</button>
     </div>
 
     <div class="calendar-container {currentView === 'week' ? 'week-view' : ''}" bind:this={calendarContainer}>

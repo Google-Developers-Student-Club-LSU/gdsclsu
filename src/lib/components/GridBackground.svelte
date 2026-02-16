@@ -1,10 +1,10 @@
-<div class="fixed inset-0 -z-10 bg-white overflow-hidden">
+<div class="fixed inset-0 -z-10 overflow-hidden">
   <div class="stripes-container">
     {#each Array(12) as _, i}
       <div 
         class="stripe"
         style="
-          background: linear-gradient(135deg, #f3e8ff} 0%, #e9d5ff 100%);
+          background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
           left: {i * 10 - 10}%;
           animation-delay: {i * 0.2}s;
         "

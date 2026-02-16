@@ -5,6 +5,7 @@ declare global {
 		// interface Error {}
 		interface Locals {
 			user: {
+        permissions: any;
 				uid: string;
 				email: string | null;
 				emailVerified: boolean;

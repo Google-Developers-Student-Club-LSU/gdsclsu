@@ -1,45 +1,74 @@
-/**
- * Firebase configuration
- * Replace these values with your Firebase project credentials
- * You can find these in your Firebase Console > Project Settings > General
- */
+import { initializeApp, getApps } from "firebase/app";
+import type { FirebaseApp } from "firebase/app";
 
-export interface FirebaseConfig {
+interface FirebaseConfig {
   apiKey: string;
-  authDomain: string;
   projectId: string;
+  authDomain: string;
+  databaseURL?: string;
   storageBucket: string;
-  messagingSenderId: string;
   appId: string;
+  measurementId?: string;
+  messagingSenderId: string;
+}
+function getFirebaseConfig(): FirebaseConfig | null {
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_KEY;
+  const projectId = process.env.NEXT_PUBLIC_PROJECT_ID;
+
+  if (!apiKey || apiKey === '' || apiKey === 'undefined') {
+    if (typeof window === 'undefined') {
+      console.warn('FIREBASE BUILD GUARD: API key missing during build. Firebase will not initialize.');
+    } else {
+      console.error('FIREBASE INIT ERROR: NEXT_PUBLIC_FIREBASE_KEY is missing or invalid.');
+    }
+    return null;
+  }
+
+  if (!projectId || projectId === '' || projectId === 'undefined') {
+    if (typeof window === 'undefined') {
+      console.warn('FIREBASE BUILD GUARD: Project ID missing during build. Firebase will not initialize.');
+    } else {
+      console.error('FIREBASE INIT ERROR: NEXT_PUBLIC_PROJECT_ID is missing or invalid.');
+    }
+    return null;
+  }
+
+  return {
+    apiKey,
+    projectId,
+    authDomain: process.env.NEXT_PUBLIC_AUTH_DOMAIN || `${projectId}.firebaseapp.com`,
+    databaseURL: process.env.NEXT_PUBLIC_DATABASE_URL,
+    storageBucket: process.env.NEXT_PUBLIC_STORAGE_BUCKET || `${projectId}.appspot.com`,
+    appId: process.env.NEXT_PUBLIC_APP_ID || '',
+    measurementId: process.env.NEXT_PUBLIC_MEASUREMENT_ID,
+    messagingSenderId: process.env.NEXT_PUBLIC_MESSAGING_SENDER_ID || ''
+  };
 }
 
-export const firebaseConfig: FirebaseConfig = {
-  apiKey: import.meta.env.PUBLIC_FIREBASE_API_KEY || '',
-  authDomain: import.meta.env.PUBLIC_FIREBASE_AUTH_DOMAIN || '',
-  projectId: import.meta.env.PUBLIC_FIREBASE_PROJECT_ID || '',
-  storageBucket: import.meta.env.PUBLIC_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: import.meta.env.PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: import.meta.env.PUBLIC_FIREBASE_APP_ID || ''
-};
+let firebaseApp: FirebaseApp | null = null;
 
-/**
- * Firebase Admin SDK configuration
- * For server-side operations, you'll need a service account key
- * Download it from Firebase Console > Project Settings > Service Accounts
- * 
- * @returns {string | object} Service account key as a string (file path) or parsed object
- * @throws {Error} If FIREBASE_SERVICE_ACCOUNT_KEY is not set
- */
-export function getFirebaseAdminConfig(): string | object {
-  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-  
-  if (!serviceAccountKey) {
-    throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set');
+export function getFirebaseApp(): FirebaseApp | null {
+  if (typeof window === 'undefined') {
+    return null;
   }
-  
+
+  const existingApps = getApps();
+  if (existingApps.length > 0) {
+    firebaseApp = existingApps[0];
+    return firebaseApp;
+  }
+
+  const config = getFirebaseConfig();
+  if (!config) {
+    console.error('FIREBASE INIT SKIPPED: Invalid configuration. Check your environment variables.');
+    return null;
+  }
+
   try {
-    return JSON.parse(serviceAccountKey);
-  } catch {
-    return serviceAccountKey;
+    firebaseApp = initializeApp(config);
+    return firebaseApp;
+  } catch (error) {
+    console.error('FIREBASE INIT ERROR:', error);
+    return null;
   }
 }

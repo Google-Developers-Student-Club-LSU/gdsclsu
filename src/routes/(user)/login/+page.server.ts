@@ -1,6 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
-import { getAuth } from '$lib/firebase/admin.js';
+import { auth, signIn } from '$lib/firebase/auth.js';
 
 export const actions: Actions = {
   login: async ({ request, cookies, url }) => {
@@ -9,7 +9,6 @@ export const actions: Actions = {
     const password = formData.get('password')?.toString();
     const redirectTo = url.searchParams.get('redirectTo') || '/';
 
-    // Validate input
     if (!email || !password) {
       return fail(400, {
         error: 'Email and password are required'
@@ -17,58 +16,9 @@ export const actions: Actions = {
     }
 
     try {
-      const auth = getAuth();
-      
-      const firebaseApiKey = import.meta.env.PUBLIC_FIREBASE_API_KEY;
-      if (!firebaseApiKey) {
-        throw new Error('Firebase API key not configured. Please set PUBLIC_FIREBASE_API_KEY in your .env file.');
-      }
+      const response = await signIn(email, password);
 
-      const response = await fetch(
-        `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${firebaseApiKey}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            email,
-            password,
-            returnSecureToken: true
-          })
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        let errorMessage = 'Invalid email or password';
-        
-        if (data.error) {
-          switch (data.error.message) {
-            case 'EMAIL_NOT_FOUND':
-              errorMessage = 'No account found with this email';
-              break;
-            case 'INVALID_PASSWORD':
-              errorMessage = 'Incorrect password';
-              break;
-            case 'USER_DISABLED':
-              errorMessage = 'This account has been disabled';
-              break;
-            case 'INVALID_EMAIL':
-              errorMessage = 'Invalid email address';
-              break;
-            default:
-              errorMessage = data.error.message || 'Authentication failed';
-          }
-        }
-
-        return fail(401, {
-          error: errorMessage
-        });
-      }
-
-      const idToken = data.idToken;
+      const idToken = auth.idToken;
       const decodedToken = await auth.verifyIdToken(idToken);
 
       const expiresIn = 60 * 60 * 24 * 5 * 1000; 
@@ -79,7 +29,7 @@ export const actions: Actions = {
         httpOnly: true,
         sameSite: 'strict',
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24 * 5 // 5 days
+        maxAge: 60 * 60 * 24 * 5 
       });
 
       cookies.set('user', JSON.stringify({

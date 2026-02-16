@@ -6,6 +6,7 @@
   interface User {
     uid: string;
     email: string | null;
+    permissions: string[];
     emailVerified: boolean;
   }
 
@@ -25,10 +26,6 @@
       <img src={gdscLogo} alt="GDG Logo" class="h-8 w-12" />
     </a>
     <h1 class="">GDG LSU</h1>
-  </div>
-
-  <div>
-    <button id="theme-toggle"></button>
   </div>
 
   <div class="flex gap-8">

@@ -8,7 +8,7 @@
 <div class="min-h-screen flex items-center justify-center px-4">
   <div class="w-full max-w-md">
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-      <h1 class="text-4xl font-bold text-center mb-8 text-gray-900 dark:text-white">Log In</h1>
+      <h1 class="text-4xl font-bold text-center mb-8 text-gray-900 dark:text-white">Sign Up</h1>
       
       {#if form?.error}
         <div class="mb-4 p-4 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 rounded" role="alert">
@@ -16,7 +16,7 @@
         </div>
       {/if}
 
-      <form method="POST" action="?/login" use:enhance>
+      <form method="POST" action="?/register" use:enhance>
         <div class="mb-4">
           <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Email
@@ -51,12 +51,9 @@
           type="submit"
           class="w-full bg-primary-color hover:bg-opacity-90 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200"
         >
-          Log In
+          Sign Up 
         </button>
       </form>
     </div>
-    <button class="align-center justify-center block w-full mt-4 bg-secondary-color hover:bg-opacity-90 font-semibold py-2 px-4 rounded-lg transition-colors duration-200">
-      <a href="/register" class="text-primary-color no-underline">Register</a>
-    </button>
   </div>
 </div>

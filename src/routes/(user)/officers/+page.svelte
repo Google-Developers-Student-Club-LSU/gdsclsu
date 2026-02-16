@@ -1,11 +1,11 @@
 <script>
-  import ImageTrack from "$lib/components/ImageTrack.svelte";
-  import GridBackground from "$lib/components/GridBackground.svelte";
 </script>
 
-<div class="grid min-h-dvh place-items-center gap-10 grid-template-rows-[auto]">
-  <div class="flex flex-col">
-    <GridBackground></GridBackground>
-    <ImageTrack></ImageTrack>
+<div class="relative min-h-screen flex flex-col items-center justify-center gap-20 py-16 px-5 overflow-hidden">
+  <div class="text-center w-full h-full overflow-auto">
+    <p> Hello Officers</p>
+  </div>
+  <div class="w-full h-full">
+    <p>Second slide</p>
   </div>
 </div>
