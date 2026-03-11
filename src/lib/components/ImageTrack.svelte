@@ -1,10 +1,5 @@
-
 <script lang="ts">
   import { onMount } from "svelte";
-
-  import dina from "$lib/assets/Dina.jpg";
-  import hudson from "$lib/assets/Hudson.png";
-  import parallel from "$lib/assets/Parallel.png";
 
   onMount(() => {
     const track = document.getElementById("track");
@@ -48,10 +43,7 @@
   }) 
 </script>
 
-<div id="track" data-mouse-down-at="0" data-prev-percentage="0" data-percentage="0" class="flex justify-center align-center">
-  <img src={hudson} alt="parallel" class="image"/>
-  <img src={hudson} alt="parallel" class="image"/>
-  <img src={hudson} alt="parallel" class="image"/>
+<div id="track" data-mouse-down-at="0" data-prev-percentage="0" data-percentage="0" class="flex justify-center align-center translate-x-[100%]">
 </div>
 
 <style>
@@ -63,7 +55,7 @@
   }
 
   #track {
-    width: 40vh;
+    width: 30vh;
     display: flex;
     gap: 4vmin;
     user-select: none;

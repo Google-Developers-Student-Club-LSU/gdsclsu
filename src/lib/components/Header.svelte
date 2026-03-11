@@ -1,7 +1,16 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
-  import gdscLogo from "$lib/assets/GDSC.png";
+  import gdscLogo from "$lib/assets/GDSC.jpg";
+
+  interface User {
+    uid: string;
+    email: string | null;
+    permissions: string[];
+    emailVerified: boolean;
+  }
+
+  let { user }: { user: User | null } = $props();
 
   onMount(() => {
     document.getElementById("theme-toggle")?.addEventListener("click", () => {
@@ -19,16 +28,14 @@
     <h1 class="">GDG LSU</h1>
   </div>
 
-  <div>
-    <button id="theme-toggle"></button>
-  </div>
-
   <div class="flex gap-8">
     <a href="/about">About</a>
     <a href="/events">Events</a>
     <a href="/officers">Officers</a>
     <a href="/sponsor">Sponsor</a>
-    <a href="/taskboard">Taskboard</a>
+    {#if user}
+      <a href="/taskboard">Taskboard</a>
+    {/if}
     <a href="/login">Login</a>
   </div>
 </div>
