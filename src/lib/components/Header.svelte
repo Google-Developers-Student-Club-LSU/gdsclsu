@@ -32,6 +32,7 @@
     <a href="/about">About</a>
     <a href="/events">Events</a>
     <a href="/officers">Officers</a>
+    <a href="/leaderboard">Leaderboard</a>
     <a href="/sponsor">Sponsor</a>
     {#if user}
       <a href="/taskboard">Taskboard</a>
