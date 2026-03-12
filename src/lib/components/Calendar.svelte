@@ -17,7 +17,8 @@
     let calendarBody: HTMLDivElement | undefined = $state(undefined);
     let addEventBtn: HTMLButtonElement | undefined = $state(undefined);
     let todayBtn: HTMLButtonElement | undefined = $state(undefined);
-    let cancelBtn: HTMLButtonElement | undefined = $state(undefined);
+    let cancelBtn: HTMLButtonElement | undefined = $state(undefined); 
+    let saveBtn: HTMLButtonElement | undefined = $state(undefined);
     let eventForm: HTMLFormElement | undefined = $state(undefined);
     let eventModal: HTMLDivElement | undefined = $state(undefined);
     let modalTitle: HTMLHeadingElement | undefined = $state(undefined);
@@ -34,7 +35,6 @@
     let monthViewBtn: HTMLButtonElement | undefined = $state(undefined);
     let timeGrid: HTMLDivElement | undefined = $state(undefined);
 
-    //let events: Event[] = []
     let events: Event[] = [
   // ===== FEBRUARY =====
   {
@@ -690,7 +690,7 @@
                 </div>
                 <div class="detail-row">
                     <strong>Time:</strong>
-                    <span>{selectedEvent.startTime} – {selectedEvent.endTime}</span>
+                    <span>{formatTimeWithAmPm(selectedEvent.startTime)} – {formatTimeWithAmPm(selectedEvent.endTime)}</span>
                 </div>
                 <div class="detail-row">
                     <strong>Color:</strong>
@@ -707,7 +707,9 @@
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick={closeDetailModal}>Close</button>
+                {#if user}
                 <button type="button" class="btn btn-primary" onclick={() => openEventModal(null, selectedEvent)}>Edit</button>
+            {/if}
             </div>
         </div>
     </div>
