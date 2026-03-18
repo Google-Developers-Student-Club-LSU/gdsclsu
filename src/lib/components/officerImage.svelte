@@ -1,8 +1,10 @@
 <script>
-    export let image = '';
-    export let name = '';
-    export let role = '';
-    export let description = '';
+    let {
+        image = '',
+        name = '',
+        role = '',
+        description = ''
+    } = $props();
 </script>
 
 <div class="officer-card">

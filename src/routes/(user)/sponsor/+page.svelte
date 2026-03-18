@@ -4,8 +4,6 @@
 
   import GDSCSponsorship from "$lib/assets/GDSCSponsorship.pdf";
 
-  import GridBackground from "$lib/components/GridBackground.svelte";
-
   function downloadBooklet(): void {
     const link = document.createElement('a');
     link.href = GDSCSponsorship;
