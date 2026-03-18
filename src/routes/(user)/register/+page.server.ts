@@ -14,6 +14,12 @@ export const actions: Actions = {
       });
     }
 
+    if (email.split(".")[1] !== "edu") {
+      return fail(400, {
+        error: 'Only .edu email addresses are allowed'
+      });
+    }
+
     try {
       const response = await createUser(email, password);
     } catch (error) {

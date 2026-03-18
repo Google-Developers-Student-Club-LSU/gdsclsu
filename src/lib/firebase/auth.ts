@@ -6,7 +6,7 @@ import { getFirebaseApp } from "./config";
 
 let authInstance: Auth | null = null;
 
-function getAuthInstance(): Auth | null {
+export function getAuthInstance(): Auth | null {
   if (typeof window === 'undefined') {
     return null;
   }

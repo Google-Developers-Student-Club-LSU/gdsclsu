@@ -1,13 +1,13 @@
 import type { Handle } from '@sveltejs/kit';
-import { getAuth } from '$lib/firebase/auth.js';
+import * as admin from 'firebase-admin';
 
 export const handle: Handle = async ({ event, resolve }) => {
   const sessionCookie = event.cookies.get('session');
 
   if (sessionCookie) {
     try {
-      const auth = getAuth();
-      const decodedToken = await auth.verifySessionCookie(sessionCookie, true);
+      const adminAuth  = admin.auth()
+      const decodedToken = await adminAuth.verifySessionCookie(sessionCookie, true);
       
       event.locals.user = {
         permissions: decodedToken.permissions || [],
