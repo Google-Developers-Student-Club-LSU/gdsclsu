@@ -6,7 +6,7 @@
 
   function getImage(name: string) {
     const person = name.split(' ')[0]?.toLowerCase() ?? '';
-    return `/${person}.png`;
+    return `/${person}.webp`;
   }
 
 </script>
