@@ -7,10 +7,6 @@ import { getFirebaseApp } from "./config";
 let authInstance: Auth | null = null;
 
 export function getAuthInstance(): Auth | null {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
   if (!authInstance) {
     const app = getFirebaseApp();
     if (!app) {
@@ -40,7 +36,7 @@ export async function createUser (email: string, password: string, username?: st
       id: userCredential.user.uid,
       username: username || null,
       points: 0,
-      permissions: "base"
+      permissions: "member"
     };
 
     await database.addToFirebase(newUser, "users");

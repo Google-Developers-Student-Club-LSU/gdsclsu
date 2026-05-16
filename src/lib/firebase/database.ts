@@ -5,10 +5,6 @@ import { getFirebaseApp } from "./config";
 let databaseInstance: Firestore | null = null;
 
 function getDatabase(): Firestore | null {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
   if (!databaseInstance) {
     const app = getFirebaseApp();
     if (!app) {

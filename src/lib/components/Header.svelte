@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
 
   import gdscLogo from "$lib/assets/GDSC.jpg";
+  import { page } from "$app/state";
 
   interface User {
     uid: string;
@@ -13,6 +14,7 @@
   let { user }: { user: User | null } = $props();
 
   onMount(() => {
+    console.log(user);
     document.getElementById("theme-toggle")?.addEventListener("click", () => {
       document.body.classList.toggle("dark");
       localStorage.theme = document.body.classList.contains("dark") ? "dark" : "light";
@@ -37,6 +39,8 @@
     {#if user}
       <a href="/taskboard">Taskboard</a>
     {/if}
+    {#if !user}
     <a href="/login">Login</a>
+    {/if}
   </div>
 </div>

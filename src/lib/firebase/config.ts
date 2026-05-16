@@ -11,47 +11,34 @@ interface FirebaseConfig {
   measurementId?: string;
   messagingSenderId: string;
 }
+
+import { 
+  PUBLIC_API_KEY, 
+  PUBLIC_AUTH_DOMAIN,
+  PUBLIC_PROJECT_ID,
+  PUBLIC_STORAGE_BUCKET,
+  PUBLIC_MESSAGING_SENDER_ID,
+  PUBLIC_APP_ID,
+  PUBLIC_MEASUREMENT_ID,
+  PUBLIC_DATABASE_URL
+} from '$env/static/public';
+
 function getFirebaseConfig(): FirebaseConfig | null {
-  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_KEY;
-  const projectId = process.env.NEXT_PUBLIC_PROJECT_ID;
-
-  if (!apiKey || apiKey === '' || apiKey === 'undefined') {
-    if (typeof window === 'undefined') {
-      console.warn('FIREBASE BUILD GUARD: API key missing during build. Firebase will not initialize.');
-    } else {
-      console.error('FIREBASE INIT ERROR: NEXT_PUBLIC_FIREBASE_KEY is missing or invalid.');
-    }
-    return null;
-  }
-
-  if (!projectId || projectId === '' || projectId === 'undefined') {
-    if (typeof window === 'undefined') {
-      console.warn('FIREBASE BUILD GUARD: Project ID missing during build. Firebase will not initialize.');
-    } else {
-      console.error('FIREBASE INIT ERROR: NEXT_PUBLIC_PROJECT_ID is missing or invalid.');
-    }
-    return null;
-  }
-
   return {
-    apiKey,
-    projectId,
-    authDomain: process.env.NEXT_PUBLIC_AUTH_DOMAIN || `${projectId}.firebaseapp.com`,
-    databaseURL: process.env.NEXT_PUBLIC_DATABASE_URL,
-    storageBucket: process.env.NEXT_PUBLIC_STORAGE_BUCKET || `${projectId}.appspot.com`,
-    appId: process.env.NEXT_PUBLIC_APP_ID || '',
-    measurementId: process.env.NEXT_PUBLIC_MEASUREMENT_ID,
-    messagingSenderId: process.env.NEXT_PUBLIC_MESSAGING_SENDER_ID || ''
+    apiKey: PUBLIC_API_KEY,
+    projectId: PUBLIC_PROJECT_ID,
+    authDomain: PUBLIC_AUTH_DOMAIN,
+    databaseURL: PUBLIC_DATABASE_URL,
+    storageBucket: PUBLIC_STORAGE_BUCKET,
+    appId: PUBLIC_APP_ID,
+    measurementId: PUBLIC_MEASUREMENT_ID,
+    messagingSenderId: PUBLIC_MESSAGING_SENDER_ID
   };
 }
 
 let firebaseApp: FirebaseApp | null = null;
 
 export function getFirebaseApp(): FirebaseApp | null {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
   const existingApps = getApps();
   if (existingApps.length > 0) {
     firebaseApp = existingApps[0];

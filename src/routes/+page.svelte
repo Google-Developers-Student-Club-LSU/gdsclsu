@@ -1,7 +1,5 @@
 <script lang="ts">
-	import ImageTrack from "$lib/components/ImageTrack.svelte";
 	import BlobBackground from "$lib/components/BlobBackground.svelte";
-	import Leaderboard from "$lib/components/Leaderboard.svelte";
 
   import gsap from "gsap";
   import { onMount } from "svelte";
