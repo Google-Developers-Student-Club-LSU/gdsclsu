@@ -1,20 +1,15 @@
 <script lang="ts">
   import { onMount } from "svelte";
-
   import gdscLogo from "$lib/assets/GDSC.jpg";
-  import { page } from "$app/state";
+  import { authState } from "$lib/firebase/auth.svelte";
 
-  interface User {
-    uid: string;
-    email: string | null;
-    permissions: string[];
-    emailVerified: boolean;
-  }
+  let user = $derived(authState.user);
+  let loading = $derived(authState.loading);
+  let isOfficer = $derived(authState.isOfficer);
 
-  let { user }: { user: User | null } = $props();
+  $inspect(user);  
 
   onMount(() => {
-    console.log(user);
     document.getElementById("theme-toggle")?.addEventListener("click", () => {
       document.body.classList.toggle("dark");
       localStorage.theme = document.body.classList.contains("dark") ? "dark" : "light";
@@ -36,11 +31,14 @@
     <a href="/officers">Officers</a>
     <a href="/leaderboard">Leaderboard</a>
     <a href="/sponsor">Sponsor</a>
-    {#if user}
-      <a href="/taskboard">Taskboard</a>
-    {/if}
-    {#if !user}
-    <a href="/login">Login</a>
+
+    {#if !loading}
+      {#if isOfficer}
+        <a href="/taskboard">Taskboard</a>
+      {/if}
+      {#if !user}
+        <a href="/login">Login</a>
+      {/if}
     {/if}
   </div>
 </div>

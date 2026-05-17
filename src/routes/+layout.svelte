@@ -5,11 +5,17 @@
 	import Footer from "$lib/components/Footer.svelte";
 
 	import type { LayoutData } from './$types';
+    import { onMount } from 'svelte';
+    import { getAuthInstance } from '$lib/firebase/auth';
 
 	let { children, data }: { children: any; data: LayoutData } = $props();
+
+	onMount(() => {
+		getAuthInstance();
+	});
 </script>
 
-<Header user={data.user} />
+<Header />
 <div class="min-h-dvh flex flex-col justify-between item-center">
 	<div class="min-h-dvh">
 		<main>

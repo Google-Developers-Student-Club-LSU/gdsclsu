@@ -3,6 +3,7 @@ import type { Auth, User as FirebaseUser } from "firebase/auth";
 import type { User } from "../models/User";
 import * as database from "./database";
 import { getFirebaseApp } from "./config";
+import { authState } from './auth.svelte';
 
 let authInstance: Auth | null = null;
 
@@ -13,6 +14,8 @@ export function getAuthInstance(): Auth | null {
       return null;
     }
     authInstance = getAuth(app);
+
+    authState.init(authInstance);
   }
   return authInstance;
 }
@@ -39,7 +42,7 @@ export async function createUser (email: string, password: string, username?: st
       permissions: "member"
     };
 
-    await database.addToFirebase(newUser, "users");
+    await database.saveUserWithUid(newUser);
     return userCredential.user;
   } catch (error) {
     console.error("Error creating user:", error);
