@@ -3,7 +3,7 @@ import type { User } from "../models/User";
 import { getFirebaseApp } from "./config";
 
 let databaseInstance: Firestore | null = null;
-const db = getDatabase();
+export const db = getDatabase();
 
 function getDatabase(): Firestore | null {
   if (!databaseInstance) {
@@ -16,7 +16,7 @@ function getDatabase(): Firestore | null {
   return databaseInstance;
 }
 
-export async function addToFirebase (object: User, table: string) {
+export async function addToFirebase (object: any, table: string) {
   if (!db) {
     console.error("Firebase Database is not available. Check your environment variables.");
     return;
@@ -43,13 +43,13 @@ export async function deleteFromFirebase (docId: string, table: string) {
     .catch(error => { console.error(error); });
 }
 
-export async function updateDocInFirebase (docId: string, table: string, updates: Partial<User>) {
+export async function updateDocInFirebase (docId: string, table: string, updates: any) {
   if (!db) {
     console.error("Firebase Database is not available. Check your environment variables.");
     return;
   }
   const reference = doc(db, table, docId);
-  await updateDoc(reference, updates as any)
+  await updateDoc(reference, updates)
     .catch(error => { console.error(error); });
 }
 

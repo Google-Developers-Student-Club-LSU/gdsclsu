@@ -4,8 +4,10 @@ import type { User } from "../models/User";
 import * as database from "./database";
 import { getFirebaseApp } from "./config";
 import { authState } from './auth.svelte';
+import { getDatabase } from "firebase/database";
 
 let authInstance: Auth | null = null;
+const db = getDatabase();
 
 export function getAuthInstance(): Auth | null {
   if (!authInstance) {

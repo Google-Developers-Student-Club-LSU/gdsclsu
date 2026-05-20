@@ -22,6 +22,7 @@ import {
   PUBLIC_MEASUREMENT_ID,
   PUBLIC_DATABASE_URL
 } from '$env/static/public';
+import { getDatabase } from "firebase/database";
 
 function getFirebaseConfig(): FirebaseConfig | null {
   return {

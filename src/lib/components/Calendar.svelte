@@ -1,14 +1,17 @@
 <script lang="ts">
     import { onMount, tick } from "svelte";
+    import { authState } from "$lib/firebase/auth.svelte";
+    import * as database from "$lib/firebase/database";
+    import { collection, getDocs } from "firebase/firestore";
     
     type ViewType = 'week' | 'month';
     type Event = { id: string; title: string; description?: string; date: string; startTime: string; endTime: string; color: string; }
     
     interface User {
-        uid: string;
-        email: string | null;
-        permissions: string[];
-        emailVerified: boolean;
+        id: string;
+        permissions: string;
+        points: number;
+        username: string;
     }
     
     let { user }: { user: User | null } = $props();
@@ -35,145 +38,8 @@
     let monthViewBtn: HTMLButtonElement | undefined = $state(undefined);
     let timeGrid: HTMLDivElement | undefined = $state(undefined);
 
-    let events: Event[] = [
-  // ===== FEBRUARY =====
-  {
-    id: 'gbm-3-2026',
-    title: 'General Body Meeting 3',
-    date: '2026-01-26',
-    startTime: '17:00',
-    endTime: '18:30',
-    color: 'purple'
-  },
-  {
-    id: 'resume-workshop-2026',
-    title: '📌 Resume Workshop',
-    date: '2026-02-02',
-    startTime: '17:00',
-    endTime: '18:30',
-    color: 'blue'
-  },
-  {
-    id: 'portfolio-workshop-2026',
-    title: '📌 Portfolio Workshop',
-    date: '2026-02-02',
-    startTime: '18:30',
-    endTime: '20:00',
-    color: 'green'
-  },
-  {
-    id: 'potluck-game-night-2026',
-    title: '🍕 Potluck & Game Night',
-    date: '2026-02-09',
-    startTime: '18:00',
-    endTime: '20:00',
-    color: 'purple'
-  },
-  {
-    id: 'python-workshop-2026',
-    title: '🐍 Python Workshop',
-    date: '2026-02-23',
-    startTime: '17:00',
-    endTime: '18:30',
-    color: 'green'
-  },
-
-  // ===== MARCH =====
-  {
-    id: 'discord-bot-workshop-2026',
-    title: '🤖 Make Your Own Discord Bot',
-    date: '2026-03-02',
-    startTime: '17:00',
-    endTime: '18:30',
-    color: 'green'
-  },
-  {
-    id: 'gbm-4-pickleball-2026',
-    title: 'GBM 4 + Pickleball @ UREC',
-    date: '2026-03-16',
-    startTime: '17:00',
-    endTime: '19:00',
-    color: 'purple'
-  },
-  {
-    id: 'presentation-workshop-2026',
-    title: '🗣 Presentation Workshop',
-    date: '2026-03-16',
-    startTime: '18:00',
-    endTime: '19:30',
-    color: 'blue'
-  },
-  {
-    id: 'blender-workshop-2026',
-    title: '🎨 Blender Workshop',
-    date: '2026-03-23',
-    startTime: '17:00',
-    endTime: '18:30',
-    color: 'green'
-  },
-{
-    id: 'web-scraping-ai-agent-2026',
-    title: '🧠 Create a Web Scraping AI Agent',
-    date: '2026-03-30',
-    startTime: '17:00',
-    endTime: '18:30',
-    color: 'red'
-  },
-
-  // ===== APRIL =====
-  {
-    id: 'ctf-competition-2026',
-    title: '🔐 Cyber Capture The Flag Competition',
-    date: '2026-04-06',
-    startTime: '17:00',
-    endTime: '19:00',
-    color: 'orange'
-  },
-  {
-    id: 'man-vs-ai-2026',
-    title: '🤺 Man vs AI Event',
-    date: '2026-04-13',
-    startTime: '17:00',
-    endTime: '18:30',
-    color: 'red'
-  },
-  {
-    id: 'ai-agent-mcp-2026',
-    title: '🧠 Build Complex AI Agent with MCP Servers',
-    date: '2026-04-13',
-    startTime: '18:30',
-    endTime: '20:00',
-    color: 'red'
-  },
-  {
-    id: 'how-to-use-ai-2026',
-    title: '🤖 How To Properly Use AI as a Programmer',
-    date: '2026-04-20',
-    startTime: '17:00',
-    endTime: '18:30',
-    color: 'red'
-  },
-  {
-    id: 'gbm-5-2026',
-    title: 'General Body Meeting 5',
-    date: '2026-04-27',
-    startTime: '17:00',
-    endTime: '18:30',
-    color: 'purple'
-  },
-
-  // ===== EASTER EGG =====
-  {
-    id: 'easter-egg-2026',
-    title: '🐣 Easter Egg',
-    description: 'You weren’t supposed to find this.',
-    date: '2026-03-01',
-    startTime: '12:00',
-    endTime: '13:00',
-    color: 'purple'
-  }
-];
-    let editingEventId: string | null = null;
+    let events: Event[] = $state([]);
+    let editingEventId = $state<string | null>(null);
     let selectedEvent: Event | null = $state(null);
     let showDetailModal: boolean = $state(false);
     let currentView: ViewType = $state('week');
@@ -401,32 +267,38 @@
 
     function openEventModal(hour: number | null = null, event: Event | null = null, date: Date | null = null) {
         closeDetailModal();
-        if (event) {
-            if (modalTitle) modalTitle.textContent = 'Edit Event';
-            if (eventTitle) eventTitle.value = event.title;
-            if (eventDate) eventDate.value = event.date;
-            if (eventStart) eventStart.value = event.startTime;
-            if (eventEnd) eventEnd.value = event.endTime;
-            if (eventDescription) eventDescription.value = event.description || '';
-            if (eventColor) eventColor.value = event.color;
-            editingEventId = event.id;
+        if (!authState.isOfficer) {
+            console.warn("Unauthorized: Only officers can create events.");
+            return;
         } else {
-            if (modalTitle) modalTitle.textContent = 'Add New Event'
-            if (eventTitle) eventTitle.value = '';
-            if (eventDate) eventDate.value = date ? formatDate(date) : formatDate(currentDate);
-            if (eventStart) eventStart.value = hour ? `${hour.toString().padStart(2, '0')}:00` : `09:00`
-            if (eventEnd) eventEnd.value = hour ? `${(hour+1).toString().padStart(2, '0')}:00` : `10:00`
-            if (eventDescription) eventDescription.value = '';
-            if (eventColor) eventColor.value = 'blue';
-            editingEventId = null;
+            if (event) {
+                if (modalTitle) modalTitle.textContent = 'Edit Event';
+                if (eventTitle) eventTitle.value = event.title;
+                if (eventDate) eventDate.value = event.date;
+                if (eventStart) eventStart.value = event.startTime;
+                if (eventEnd) eventEnd.value = event.endTime;
+                if (eventDescription) eventDescription.value = event.description || '';
+                if (eventColor) eventColor.value = event.color;
+                editingEventId = event.id;
+            } else {
+                if (modalTitle) modalTitle.textContent = 'Add New Event'
+                if (eventTitle) eventTitle.value = '';
+                if (eventDate) eventDate.value = date ? formatDate(date) : formatDate(currentDate);
+                if (eventStart) eventStart.value = hour ? `${hour.toString().padStart(2, '0')}:00` : `09:00`
+                if (eventEnd) eventEnd.value = hour ? `${(hour+1).toString().padStart(2, '0')}:00` : `10:00`
+                if (eventDescription) eventDescription.value = '';
+                if (eventColor) eventColor.value = 'blue';
+                editingEventId = null;
+            }
+
+            if (eventModal) {
+                eventModal.style.display = 'flex';
+                eventModal.style.alignItems = 'center';
+                eventModal.style.justifyContent = 'center';
+            }
+            if (eventTitle) eventTitle.focus();
         }
 
-        if (eventModal) {
-            eventModal.style.display = 'flex';
-            eventModal.style.alignItems = 'center';
-            eventModal.style.justifyContent = 'center';
-        }
-        if (eventTitle) eventTitle.focus();
     }
 
     function closeEventModal() {
@@ -434,8 +306,13 @@
         editingEventId = null;
     }
 
-    function saveEvent(e: SubmitEvent) {
+    async function saveEvent(e: SubmitEvent) {
         e.preventDefault();
+
+        if (!authState.isOfficer) {
+            alert("Unauthorized: only officers can create or modify events.")
+            return;
+        }
 
         const title = eventTitle?.value.trim() || '';
         const description = eventDescription?.value.trim() || '';
@@ -464,17 +341,23 @@
             color
         }
 
-        if(editingEventId) {
-            const index = events.findIndex(event => event.id === editingEventId)
-            if (index !== -1) {
-                events[index] = eventData;
+        try {
+            if(editingEventId) {
+                await database.updateDocInFirebase(editingEventId, "events", eventData);
+                const index = events.findIndex(event => event.id === editingEventId)
+                if (index !== -1) {
+                    events[index] = eventData;
+                }
+            } else {
+                await database.addToFirebase(eventData, "events");
+                events.push(eventData);
             }
-        } else {
-            events.push(eventData);
-        }
 
-        renderEvents();
-        closeEventModal();
+            renderEvents();
+            closeEventModal(); 
+        } catch (error) {
+            console.error("Failed to save event to Firestore: ", error);
+        }
     }
 
     function renderEvents() {
@@ -624,9 +507,43 @@
         e.stopPropagation();
     }
 
-    onMount(() => {
+    async function handleDelete(event: Event) {
+        if (!event) return;
+
+        if (confirm("Are you sure you want to delete this event?")) {
+            try {
+                await database.deleteFromFirebase(event.id, "events");
+                events = events.filter(evt => evt.id !== event.id);
+                renderEvents();
+                closeDetailModal();
+            } catch (error) {
+                console.error("Error deleting event:", error);
+            }
+        }
+    }
+
+    onMount(async () => {
         updateDateDisplay();
         setupEventListeners();
+
+        try {
+            const querySnapshot = await getDocs(collection(database.db, "events"));
+            events = querySnapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    title: data.title,
+                    description: data.description,
+                    date: data.date,
+                    startTime: data.startTime,
+                    endTime: data.endTime,
+                    color: data.color
+                };
+            }) as Event[];
+        } catch (error) {
+            console.error("Failed ot load events from database:", error);
+        }
+
         tick().then(() => {
             renderCalendar();
         });
@@ -706,9 +623,9 @@
                 {/if}
             </div>
             <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick={closeDetailModal}>Close</button>
-                {#if user}
+            {#if authState.isOfficer}
                 <button type="button" class="btn btn-primary" onclick={() => openEventModal(null, selectedEvent)}>Edit</button>
+                <button type="button" class="btn btn-delete" onclick={() => handleDelete(selectedEvent)}>Delete</button>
             {/if}
             </div>
         </div>
@@ -824,12 +741,12 @@
     }
 
     .btn-view:hover {
-        background: rgba(59, 130, 246, 0.1);
-        color: #3b82f6;
+        color: white;
+        background-color: #c6b8ff;
     }
 
     .btn-view.active {
-        background: #3b82f6;
+        background-color: #9f86ff;
         color: white;
     }
 
@@ -895,18 +812,24 @@
     }
 
     .btn-primary {
-        background-color: #3b82f6;
+        background-color: #9f86ff;
         color: white;
     }
 
     .btn-primary:hover {
-        background-color: #2563eb;
+        background-color: #9681e9;
         transform: translateY(-1px);
     }
 
     .btn-secondary {
         background-color: #f1f5f9;
         color: #475569;
+        border: 1px solid #e2e8f0;
+    }
+
+    .btn-delete{
+        background-color: #b91c1c;
+        color: white;
         border: 1px solid #e2e8f0;
     }
 
@@ -1034,7 +957,7 @@
     }
 
     :global(.week-day-number.today) {
-        background: #3b82f6;
+        background-color: #9f86ff;
         color: white;
         width: 32px;
         height: 32px;
@@ -1164,7 +1087,7 @@
     }
 
     :global(.month-day-cell.today .month-day-number) {
-        color: #3b82f6;
+        color: #9f86ff;
         font-weight: 700;
     }
 
@@ -1305,7 +1228,7 @@
     .form-group textarea:focus,
     .form-group select:focus {
         outline: none;
-        border-color: #3b82f6;
+        border-color: #9f86ff;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
