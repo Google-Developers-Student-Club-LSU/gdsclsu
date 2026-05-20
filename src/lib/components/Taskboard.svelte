@@ -361,7 +361,6 @@
     </div>
 </div>
 
-<!-- Task Detail Modal -->
 {#if showDetailModal && selectedTask}
     <div 
         class="modal" 
@@ -681,7 +680,7 @@
     }
 
     .task-card:focus-visible {
-        outline: 2px solid #3b82f6;
+        outline: 2px solid #9f86ff;
         outline-offset: 2px;
     }
 
@@ -750,7 +749,7 @@
         width: 28px;
         height: 28px;
         border-radius: 50%;
-        background: #3b82f6;
+        background: #9f86ff;
         color: white;
         display: flex;
         align-items: center;
@@ -805,7 +804,7 @@
     }
 
     .btn-primary {
-        background-color: #3b82f6;
+        background-color: #9f86ff;
         color: white;
     }
 
@@ -919,7 +918,7 @@
     .form-group textarea:focus,
     .form-group select:focus {
         outline: none;
-        border-color: #3b82f6;
+        border-color: #9f86ff;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
@@ -953,7 +952,7 @@
     }
 
     .tag-input-wrapper:focus-within {
-        border-color: #3b82f6;
+        border-color: #9f86ff;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
@@ -1137,7 +1136,7 @@
         width: 28px;
         height: 28px;
         border-radius: 50%;
-        background: #3b82f6;
+        background: #9f86ff;
         color: white;
         display: flex;
         align-items: center;

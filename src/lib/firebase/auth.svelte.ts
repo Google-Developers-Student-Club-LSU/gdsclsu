@@ -12,7 +12,6 @@ interface HeaderUser {
 class AuthState {
     #user = $state<HeaderUser | null>(null);
     #loading = $state(true);
-    isLoading: any;
 
     constructor() {
         if (!browser) return;
