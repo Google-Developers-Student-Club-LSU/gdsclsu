@@ -1,5 +1,6 @@
 <script lang="ts">
   import OfficerImage from '$lib/components/officerImage.svelte';
+  import { onMount } from 'svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -9,9 +10,34 @@
     return `/${person}.webp`;
   }
 
+  import gsap from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  onMount(() => {
+    const containers = document.querySelectorAll('.fade-container');
+    
+    containers.forEach((container: Element) => {
+      gsap.set(container, { autoAlpha: 0, y: 50 });
+      
+      gsap.to(container, {
+        autoAlpha: 1,
+        y: 0,
+        duration: 1,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: container,
+          start: "top 80%",
+          toggleActions: "play none none none"
+        }
+      });
+    });
+  });
+
 </script>
 
-<div class="relative min-h-screen flex flex-col items-center justify-center gap-20 py-16 px-5 overflow-hidden">
+<div class="fade-container relative min-h-screen flex flex-col items-center justify-center gap-20 py-16 px-5 overflow-hidden">
   <div class="text-center w-full max-w-4xl">
     <h1 class="text-4xl font-bold text-gray-800 mb-4">Meet Our Officers</h1>
     <p class="text-lg text-gray-600 mb-12">Get to know the dedicated team leading our GDSC chapter</p>

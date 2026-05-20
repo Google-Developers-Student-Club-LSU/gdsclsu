@@ -7,8 +7,6 @@
   let loading = $derived(authState.loading);
   let isOfficer = $derived(authState.isOfficer);
 
-  $inspect(user);  
-
   onMount(() => {
     document.getElementById("theme-toggle")?.addEventListener("click", () => {
       document.body.classList.toggle("dark");
