@@ -1,23 +1,46 @@
 <script lang="ts">
-	import BlobBackground from "$lib/components/BlobBackground.svelte";
-
+  import BlobBackground from "$lib/components/BlobBackground.svelte";
   import gsap from "gsap";
   import { onMount } from "svelte";
 
   onMount(() => {
+    const hasSeenIntro = sessionStorage.getItem("gdsc_intro_played");
+    const animationDelay = hasSeenIntro ? 0 : 2.3;
+
     gsap.from(".mainCard", {
-      duration: 2,
+      duration: 1.8,
       opacity: 0,
-      x: -200,
-    }).play;
+      y: 40,
+      scale: 0.95,
+      delay: animationDelay,
+      ease: "power4.out"
+    });
   });
 </script>
 
-<div class="grid min-h-dvh place-items-center gap-10 grid-template-rows-[auto]">
-  <div class="flex flex-col items-center gap-20">
+<div class="fixed inset-0 z-[-1] pointer-events-none overflow-hidden flex items-center justify-center">
+  <div class="w-full h-full scale-110 flex items-center justify-center">
     <BlobBackground />
-    <div class="flex absolute rounded-lg border border-primary-color backdrop-blur-[30px] h-[60vh] w-[65vw] brightness-84 items-center justify-center mainCard mt-25">
-      <h1 class="text-primary-text-light dark:text-primary-text-dark text-9xl">GDSC LSU</h1>
-    </div>
   </div>
+</div>
+
+<div class="relative w-full max-w-[100vw] min-h-[85vh] pt-64 flex flex-col items-center px-4 overflow-x-hidden">
+  
+  <div class="mainCard z-10 flex items-center justify-center 
+              h-[55vh] w-[85vw] max-w-5xl rounded-3xl
+              bg-white/10 dark:bg-slate-900/20 
+              backdrop-blur-[40px] 
+              border border-white/20 dark:border-slate-700/30
+              shadow-[0_25px_60px_-15px_rgba(0,0,0,0.15)]
+              relative">
+    
+    <h1 class="text-transparent bg-clip-text bg-gradient-to-r from-white via-[#c6b8ff] to-[#9f86ff] via-white to-[#c6b8ff]
+               text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight select-none
+               filter drop-shadow-[0_2px_10px_rgba(15,23,42,0.15)]
+               dark:drop-shadow-[0_4px_20px_rgba(159,134,255,0.4)]
+               animate-gradient-flow bg-[length:200%_auto] text-center">
+      GDSC LSU
+    </h1>
+  </div>
+
 </div>

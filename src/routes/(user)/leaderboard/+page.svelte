@@ -4,6 +4,10 @@
     import { type Member } from "$lib/components/Leaderboard.svelte";
     import { authState } from "$lib/firebase/auth.svelte";
     import * as database from "$lib/firebase/database";
+    import gsap from 'gsap';
+    import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+    gsap.registerPlugin(ScrollTrigger);
 
     let memberList = $state<Member[]>([]);
     let isLoading = $state(true);
@@ -11,6 +15,24 @@
 
     onMount(async () => {
         await fetchLeaderboardData();
+
+      const containers = document.querySelectorAll('.fade-container');
+      
+      containers.forEach((container: Element) => {
+        gsap.set(container, { autoAlpha: 0, y: 50 });
+        
+        gsap.to(container, {
+          autoAlpha: 1,
+          y: 0,
+          duration: 2,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: container,
+            start: "top 80%",
+            toggleActions: "play none none none"
+          }
+        });
+      });
     });
 
     async function fetchLeaderboardData() {
@@ -68,7 +90,7 @@
     }
 </script>
 
-<div class="min-h-screen flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-900">
+<div class="fade-container min-h-screen flex items-center justify-center p-6 ">
   <div class="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
     <div class="lg:col-span-2">
       <Leaderboard members={memberList} />
@@ -106,7 +128,7 @@
         </h2>
         <div class="text-center py-6">
           <p class="text-slate-500 dark:text-slate-400 mb-4">Please log in to view your score profile tracker.</p>
-          <a href="/login" class="inline-block text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">Go to Login &rarr;</a>
+          <a href="/login" class="inline-block text-sm font-semibold text-[#9f86ff] dark:text-[#9f86ff] hover:underline">Go to Login &rarr;</a>
         </div>
       {/if}
     </div>
