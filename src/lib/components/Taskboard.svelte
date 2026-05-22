@@ -1,5 +1,7 @@
 <script lang="ts">
-    import { onMount, tick } from "svelte";
+import { onMount, tick } from "svelte";
+    import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
+    import { db } from "$lib/firebase/database";
 
     type TaskStatus = 'not-started' | 'in-progress' | 'complete';
     type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
@@ -40,21 +42,8 @@
         { id: 'Organizational', label: 'Organizational', color: '#8b5cf6' }
     ];
 
-    let tasks: Task[] = $state([
-        {
-            id: '1',
-            title: 'GBM 1',
-            description: 'huaa yea this is gonna be a wesome.',
-            status: 'not-started',
-            assignee: 'Malik, Quentin',
-            priority: 'medium',
-            labels: ['Event'],
-            dueDate: '2024-09-21',
-            estimation: 3.0,
-            createdAt: '2024-09-15'
-        },
-    ]);
-
+    let tasks: Task[] = $state([]);
+    
     let draggedTask: Task | null = $state(null);
     let draggedOverColumn: TaskStatus | null = $state(null);
     let taskModal: HTMLDivElement | undefined = $state(undefined);
@@ -74,6 +63,17 @@
     
     let assigneeTags = $state<string[]>([]);
     let assigneeInputValue = $state('');
+
+    onMount(() => {
+        const unsubscribe = onSnapshot(collection(db, "tasks"), (snapshot) => {
+            tasks = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            })) as Task[];
+        });
+
+        return () => unsubscribe();
+    });
 
     function getTasksByStatus(status: TaskStatus): Task[] {
         return tasks.filter(task => task.status === status);
@@ -116,12 +116,20 @@
         draggedOverColumn = null;
     }
 
-    function handleDrop(status: TaskStatus, e: DragEvent) {
+    async function handleDrop(status: TaskStatus, e: DragEvent) {
         e.preventDefault();
         if (draggedTask && draggedTask.status !== status) {
+            const taskId = draggedTask.id;
+            
             tasks = tasks.map(task =>
-                task.id === draggedTask!.id ? { ...task, status } : task
+                task.id === taskId ? { ...task, status } : task
             );
+            
+            try {
+                await updateDoc(doc(db, "tasks", taskId), { status });
+            } catch (error) {
+                console.error("Error updating status:", error);
+            }
         }
         draggedTask = null;
         draggedOverColumn = null;
@@ -200,40 +208,47 @@
         }
     }
 
-    function saveTask(e: SubmitEvent) {
+    async function saveTask(e: SubmitEvent) {
         e.preventDefault();
-
         if (assigneeInputValue.trim()) {
             addAssigneeTag();
         }
 
         const assigneeString = assigneeTags.length > 0 ? assigneeTags.join(', ') : 'Unassigned';
-
-        const taskData: Task = {
-            id: editingTask?.id || Date.now().toString(),
+        
+        const taskData = {
             title: taskTitle?.value.trim() || '',
             description: taskDescription?.value.trim() || '',
             status: editingTask?.status || 'not-started',
             assignee: assigneeString,
             priority: taskPriority?.value as TaskPriority || 'medium',
             labels: selectedLabels,
-            dueDate: taskDueDate?.value || undefined,
+            dueDate: taskDueDate?.value || null,
             estimation: 1.0,
             createdAt: editingTask?.createdAt || new Date().toISOString().split('T')[0]
         };
 
-        if (editingTask) {
-            tasks = tasks.map(task => task.id === editingTask!.id ? taskData : task);
-        } else {
-            tasks = [...tasks, taskData];
+        try {
+            if (editingTask) {
+                await updateDoc(doc(db, "tasks", editingTask.id), taskData);
+            } else {
+                await addDoc(collection(db, "tasks"), taskData);
+            }
+            closeTaskModal();
+        } catch (error) {
+            console.error("Error saving task:", error);
         }
-
-        closeTaskModal();
     }
 
-    function deleteTask(taskId: string) {
+    async function deleteTask(taskId: string) {
         if (confirm('Are you sure you want to delete this task?')) {
             tasks = tasks.filter(task => task.id !== taskId);
+            
+            try {
+                await deleteDoc(doc(db, "tasks", taskId));
+            } catch (error) {
+                console.error("Error deleting task:", error);
+            }
         }
     }
 
@@ -260,8 +275,6 @@
         if (task?.status === 'complete') return false;
         return new Date(dueDate) < new Date();
     }
-
-
 </script>
 
 <div class="taskboard-container">
