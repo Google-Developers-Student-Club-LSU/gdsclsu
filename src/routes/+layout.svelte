@@ -63,9 +63,9 @@
 
 <div class="relative z-10 min-h-dvh flex flex-col justify-between items-center bg-transparent">
     <div class="w-full flex flex-col flex-grow">
-        <main class="flex-grow {contentReady ? 'animate-content-fade-up opacity-100' : 'opacity-0'}">
+        <main class="w-full flex-grow">
             {@render children()}
         </main>
     </div>
-	<Footer/>
+    <Footer/>
 </div>

@@ -36,21 +36,22 @@
   }
 </script>
 
-<div class="flex items-center justify-between p-6 rounded-bl-lg rounded-br-lg w-full z-50 absolute top-0">
-  <div class="flex items-center gap-4">
-    <a href="/">
-      <img src={gdscLogo} alt="GDG Logo" class="h-8 w-12 relative z-10" />
-    </a>
-    <h1 class="relative z-10 font-bold">GDG LSU</h1>
-  </div>
-
+<div class="flex items-center justify-between p-6 rounded-bl-lg rounded-br-lg w-full z-50 absolute top-0 
+            bg-white/10 dark:bg-slate-900/10 backdrop-blur-md 
+            border-b border-white/20 dark:border-slate-800/50">
+            
+  <a href="/" class="flex items-center gap-2 group">
+    <img src={gdscLogo} alt="GDSC Logo" class="h-8 w-auto relative z-10 object-contain" />
+    <h1 class="relative z-10 font-bold text-xl whitespace-nowrap group-hover:opacity-80 transition-opacity">
+      GDSC LSU
+    </h1>
+  </a>
+  
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <!-- svelte-ignore a11y_mouse_events_have_key_events -->
-  <nav 
-      bind:this={navContainer} 
-      class="relative flex gap-2 items-center" 
-      onmouseover={handleMouseOver} 
-      onmouseleave={handleMouseLeave}
-  >
+  <div class="relative flex gap-2 items-center" 
+       onmouseover={handleMouseOver} 
+       onmouseleave={handleMouseLeave}>
       <div 
           class="absolute top-0 bottom-0 bg-primary-color/20 rounded-full transition-all duration-300 ease-out pointer-events-none z-0"
           style="width: {hoverProps.width}px; transform: translateX({hoverProps.left}px); opacity: {hoverProps.opacity};"
@@ -70,5 +71,5 @@
           <a href="/login" class="px-4 py-2 rounded-full relative z-10 transition-colors hover:text-primary-color font-bold text-primary-color">Login</a>
         {/if}
       {/if}
-  </nav>
+  </div>
 </div>

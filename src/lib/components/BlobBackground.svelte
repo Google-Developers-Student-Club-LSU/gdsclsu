@@ -124,9 +124,8 @@
 <style>
   .blobContainer {
     filter: blur(60px);
-    height: 70vh;
+    height: 100vh;
     width: 100%;
-    z-index: -1;
     position: relative;
   }
 

@@ -32,7 +32,7 @@
   });
 </script>
 
-<div class="grid min-h-dvh place-items-center gap-10 grid-template-rows-[auto] fade-container">
+<div class="grid min-h-dvh place-items-center gap-10 grid-template-rows-[auto] fade-container pt-28 pb-12">
   <div class="max-w-6xl mx-auto px-4 py-8">
     <div class="text-center mb-8">
       <h1 class="text-3xl font-bold text-gray-900 mb-4">Thank You for Your Interest!</h1>
@@ -40,6 +40,7 @@
         We appreciate your consideration in becoming a sponsor. Please review our sponsorship booklet below.
       </p>
     </div>
+
 
     <div class="bg-white rounded-lg shadow-lg p-4 mb-8">
       <iframe

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import BlobBackground from "$lib/components/BlobBackground.svelte";
   import gsap from "gsap";
   import { onMount } from "svelte";
+  import BlobBackground from "$lib/components/BlobBackground.svelte";
 
   onMount(() => {
     const hasSeenIntro = sessionStorage.getItem("gdsc_intro_played");
@@ -18,13 +18,11 @@
   });
 </script>
 
-<div class="fixed inset-0 z-[-1] pointer-events-none overflow-hidden flex items-center justify-center">
-  <div class="w-full h-full scale-110 flex items-center justify-center">
-    <BlobBackground />
-  </div>
+<div class="fixed inset-0 z-0 pointer-events-none">
+  <BlobBackground />
 </div>
 
-<div class="relative w-full max-w-[100vw] min-h-[85vh] pt-64 flex flex-col items-center px-4 overflow-x-hidden">
+<div class="relative w-full min-h-[85vh] pt-32 flex items-center justify-center px-4 overflow-visible">
   
   <div class="mainCard z-10 flex items-center justify-center 
               h-[55vh] w-[85vw] max-w-5xl rounded-3xl
@@ -42,5 +40,4 @@
       GDSC LSU
     </h1>
   </div>
-
 </div>
