@@ -5,7 +5,16 @@
     import { collection, getDocs } from "firebase/firestore";
     
     type ViewType = 'week' | 'month';
-    type Event = { id: string; title: string; description?: string; date: string; startTime: string; endTime: string; color: string; }
+    type Event = { 
+        id: string;
+        title: string;
+        description?: string;
+        date: string;
+        startTime: string;
+        endTime: string;
+        color: string;
+        pin?: string;
+    }
     
     interface User {
         id: string;
@@ -45,6 +54,15 @@
     let currentView: ViewType = $state('week');
     let currentDate: Date = $state(new Date());
     let dateDisplay = $state("");
+
+    function generateEventPin(): string {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let pin = '';
+        for (let i = 0; i < 4; i++) {
+            pin += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return pin;
+    } 
 
     function formatDate(date: Date): string {
         return date.toISOString().split('T')[0];
@@ -338,7 +356,8 @@
             date,
             startTime,
             endTime,
-            color
+            color,
+            pin: editingEventId ? (events.find(e => e.id === editingEventId)?.pin) : generateEventPin()
         }
 
         try {
@@ -537,7 +556,8 @@
                     date: data.date,
                     startTime: data.startTime,
                     endTime: data.endTime,
-                    color: data.color
+                    color: data.color,
+                    pin: data.pin
                 };
             }) as Event[];
         } catch (error) {

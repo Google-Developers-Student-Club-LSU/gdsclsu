@@ -37,7 +37,7 @@
 
 </script>
 
-<div class="fade-container relative min-h-screen flex flex-col items-center justify-center gap-20 py-16 px-5 overflow-hidden">
+<div class="fade-container relative min-h-screen flex flex-col items-center justify-center gap-20 py-16 px-5 overflow-hidden pt-32">
   <div class="text-center w-full max-w-4xl">
     <h1 class="text-4xl font-bold text-gray-800 mb-4">Meet Our Officers</h1>
     <p class="text-lg text-gray-600 mb-12">Get to know the dedicated team leading our GDSC chapter</p>
