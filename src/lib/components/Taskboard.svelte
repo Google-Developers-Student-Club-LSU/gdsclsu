@@ -1,7 +1,8 @@
 <script lang="ts">
 import { onMount, tick } from "svelte";
-    import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
+    import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDocs } from "firebase/firestore";
     import { db } from "$lib/firebase/database";
+    import { stringConcat } from "firebase/firestore/pipelines";
 
     type TaskStatus = 'not-started' | 'in-progress' | 'complete';
     type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
@@ -63,6 +64,7 @@ import { onMount, tick } from "svelte";
     
     let assigneeTags = $state<string[]>([]);
     let assigneeInputValue = $state('');
+    let officersList = $state<{id: string, username: string}[]>([]);
 
     onMount(() => {
         const unsubscribe = onSnapshot(collection(db, "tasks"), (snapshot) => {
@@ -71,6 +73,28 @@ import { onMount, tick } from "svelte";
                 ...doc.data()
             })) as Task[];
         });
+
+        async function loadOfficers() {
+            try {
+                const usersSnapshot = await getDocs(collection(db, "users"));
+                const fetchedOfficers: {id: string, username: string}[] = [];
+                
+                usersSnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    if (userData.permissions === "officer") {
+                        fetchedOfficers.push({
+                            id: doc.id,
+                            username: userData.username
+                        });
+                    }
+                });
+                officersList = fetchedOfficers;
+            } catch (error) {
+                console.error("Error fetching officers:", error);
+            }
+        }
+    
+        loadOfficers();
 
         return () => unsubscribe();
     });
@@ -176,28 +200,14 @@ import { onMount, tick } from "svelte";
         assigneeInputValue = '';
     }
 
-    function addAssigneeTag() {
-        const trimmed = assigneeInputValue.trim();
-        if (trimmed && !assigneeTags.includes(trimmed)) {
-            assigneeTags = [...assigneeTags, trimmed];
-            assigneeInputValue = '';
-            if (taskAssigneeInput) {
-                taskAssigneeInput.value = '';
-            }
+    function addAssigneeTag(username: string) {
+        if (username && !assigneeTags.includes(username)) {
+            assigneeTags = [...assigneeTags, username];
         }
     }
 
     function removeAssigneeTag(tagToRemove: string) {
         assigneeTags = assigneeTags.filter(tag => tag !== tagToRemove);
-    }
-
-    function handleAssigneeInputKeydown(e: KeyboardEvent) {
-        if (e.key === ' ' || e.key === 'Enter') {
-            e.preventDefault();
-            addAssigneeTag();
-        } else if (e.key === 'Backspace' && assigneeInputValue === '' && assigneeTags.length > 0) {
-            assigneeTags = assigneeTags.slice(0, -1);
-        }
     }
 
     function toggleLabel(label: TaskLabel) {
@@ -211,7 +221,7 @@ import { onMount, tick } from "svelte";
     async function saveTask(e: SubmitEvent) {
         e.preventDefault();
         if (assigneeInputValue.trim()) {
-            addAssigneeTag();
+            addAssigneeTag(assigneeInputValue.trim());
         }
 
         const assigneeString = assigneeTags.length > 0 ? assigneeTags.join(', ') : 'Unassigned';
@@ -527,15 +537,16 @@ import { onMount, tick } from "svelte";
                 </div>
 
                 <div class="form-group">
-                    <label for="taskAssignee">Assignees</label>
+                    <label for="taskAssignee">Assignees (Officers Only)</label>
                     <div class="tag-input-container">
-                        <div class="tag-input-wrapper">
+                        <div class="tag-input-wrapper border border-slate-200 dark:border-slate-700 rounded-xl p-2 min-h-[48px] bg-slate-50 dark:bg-slate-900 flex flex-wrap gap-2 focus-within:border-[#9f86ff] focus-within:ring-2 focus-within:ring-[#9f86ff]/20 transition-all">
+                            
                             {#each assigneeTags as tag}
-                                <span class="assignee-tag">
+                                <span class="assignee-tag bg-[#9f86ff]/10 text-[#9f86ff] border border-[#9f86ff]/20 px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-2">
                                     {tag}
                                     <button
                                         type="button"
-                                        class="tag-remove"
+                                        class="hover:bg-[#9f86ff]/20 rounded-full w-5 h-5 flex items-center justify-center transition-colors"
                                         onclick={() => removeAssigneeTag(tag)}
                                         aria-label="Remove {tag}"
                                     >
@@ -543,18 +554,28 @@ import { onMount, tick } from "svelte";
                                     </button>
                                 </span>
                             {/each}
-                            <input
-                                type="text"
+                            
+                            <select 
                                 id="taskAssignee"
-                                class="tag-input"
-                                bind:this={taskAssigneeInput}
-                                bind:value={assigneeInputValue}
-                                onkeydown={handleAssigneeInputKeydown}
-                                placeholder={assigneeTags.length === 0 ? "Type name and press space or enter" : ""}
-                            />
+                                class="flex-1 min-w-[150px] bg-transparent border-none focus:ring-0 text-sm text-slate-700 dark:text-slate-300 outline-none cursor-pointer"
+                                onchange={(e) => {
+                                    const select = e.target as HTMLSelectElement;
+                                    if (select.value) {
+                                        addAssigneeTag(select.value);
+                                        select.value = ""; // Reset dropdown after selection
+                                    }
+                                }}
+                            >
+                                <option value="" disabled selected>Select an officer...</option>
+                                {#each officersList as officer}
+                                    {#if !assigneeTags.includes(officer.username)}
+                                        <option value={officer.username}>{officer.username}</option>
+                                    {/if}
+                                {/each}
+                            </select>
+                            
                         </div>
                     </div>
-                    <small class="form-hint">Type a name and press space or enter to add</small>
                 </div>
 
                 <div class="form-group">
@@ -939,14 +960,6 @@ import { onMount, tick } from "svelte";
         resize: vertical;
     }
 
-    .form-hint {
-        display: block;
-        margin-top: 4px;
-        font-size: 12px;
-        color: #64748b;
-        font-style: italic;
-    }
-
     .tag-input-container {
         width: 100%;
     }
@@ -981,42 +994,6 @@ import { onMount, tick } from "svelte";
         font-size: 13px;
         font-weight: 500;
         white-space: nowrap;
-    }
-
-    .tag-remove {
-        background: transparent;
-        border: none;
-        color: #3730a3;
-        cursor: pointer;
-        font-size: 18px;
-        line-height: 1;
-        padding: 0;
-        margin-left: 2px;
-        width: 16px;
-        height: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        transition: background-color 0.2s ease;
-    }
-
-    .tag-remove:hover {
-        background: #c7d2fe;
-    }
-
-    .tag-input {
-        flex: 1;
-        min-width: 120px;
-        border: none;
-        outline: none;
-        padding: 0;
-        font-size: 14px;
-        background: transparent;
-    }
-
-    .tag-input::placeholder {
-        color: #9ca3af;
     }
 
     .label-selector {
