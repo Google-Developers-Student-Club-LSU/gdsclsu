@@ -2,7 +2,6 @@
 import { onMount, tick } from "svelte";
     import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDocs } from "firebase/firestore";
     import { db } from "$lib/firebase/database";
-    import { stringConcat } from "firebase/firestore/pipelines";
 
     type TaskStatus = 'not-started' | 'in-progress' | 'complete';
     type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
