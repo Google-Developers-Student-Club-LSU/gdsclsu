@@ -5,6 +5,7 @@
     "": {
       "name": "gdsc",
       "dependencies": {
+        "@studio-freight/lenis": "^1.0.42",
         "firebase": "^12.8.0",
         "firebase-admin": "^13.6.0",
         "gsap": "^3.14.2",
@@ -457,6 +458,8 @@
     "@smui/touch-target": ["@smui/touch-target@8.0.3", "", { "dependencies": { "@material/touch-target": "^14.0.0", "@smui/common": "^8.0.3" } }, "sha512-yh/jAEID0cHItVftmeVjjMPt56PJe+/K5JXGeNRI5MSL5HI9a+V44XNltrS4nxCCFoqZfX2GAIR/psYf3QaxCw=="],
 
     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
+
+    "@studio-freight/lenis": ["@studio-freight/lenis@1.0.42", "", {}, "sha512-HJAGf2DeM+BTvKzHv752z6Z7zy6bA643nZM7W88Ft9tnw2GsJSp6iJ+3cekjyMIWH+cloL2U9X82dKXgdU8kPg=="],
 
     "@sveltejs/acorn-typescript": ["@sveltejs/acorn-typescript@1.0.8", "", { "peerDependencies": { "acorn": "^8.9.0" } }, "sha512-esgN+54+q0NjB0Y/4BomT9samII7jGwNy/2a3wNZbT2A2RpmXsXwUt24LvLhx6jUq2gVk4cWEvcRO6MFQbOfNA=="],
 

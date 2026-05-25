@@ -1,13 +1,12 @@
 <script lang="ts">
     import './layout.css';
-
     import Header from "$lib/components/Header.svelte";
     import Footer from "$lib/components/Footer.svelte";
     import gdscLogo from "$lib/assets/GDSC.png";
-
     import type { LayoutData } from './$types';
     import { onMount } from 'svelte';
     import { getAuthInstance } from '$lib/firebase/auth';
+    import Lenis from '@studio-freight/lenis';
 
     let { children, data }: { children: any; data: LayoutData } = $props();
 
@@ -15,6 +14,21 @@
     let contentReady = $state(false);
 
     onMount(() => {
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // standard easing
+            orientation: 'vertical',
+            gestureOrientation: 'vertical',
+            smoothWheel: true,
+        });
+
+        function raf(time: number) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+
+        requestAnimationFrame(raf);
+
         getAuthInstance();
 
         const hasSeenIntro = sessionStorage.getItem("gdsc_intro_played");

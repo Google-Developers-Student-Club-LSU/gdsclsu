@@ -2,6 +2,8 @@
   import OfficerImage from '$lib/components/officerImage.svelte';
   import { onMount } from 'svelte';
   import type { PageData } from './$types';
+  import gsap from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
   let { data }: { data: PageData } = $props();
 
@@ -10,48 +12,57 @@
     return `/${person}.webp`;
   }
 
-  import gsap from 'gsap';
-  import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
   gsap.registerPlugin(ScrollTrigger);
 
   onMount(() => {
-    const containers = document.querySelectorAll('.fade-container');
-    
-    containers.forEach((container: Element) => {
-      gsap.set(container, { autoAlpha: 0, y: 50 });
-      
-      gsap.to(container, {
+    gsap.fromTo('.hero-element',
+      { autoAlpha: 0, y: 30 },
+      { autoAlpha: 1, y: 0, duration: 1, stagger: 0.15, ease: "power3.out" }
+    );
+
+    gsap.fromTo('.officer-card',
+      { autoAlpha: 0, y: 50 },
+      {
         autoAlpha: 1,
         y: 0,
-        duration: 1,
-        ease: "power2.out",
+        duration: 0.8,
+        stagger: 0.1,
+        ease: "power3.out",
         scrollTrigger: {
-          trigger: container,
+          trigger: '.officer-grid',
           start: "top 80%",
-          toggleActions: "play none none none"
         }
-      });
-    });
+      }
+    );
   });
-
 </script>
 
-<div class="fade-container relative min-h-screen flex flex-col items-center justify-center gap-20 py-16 px-5 overflow-hidden pt-32">
-  <div class="text-center w-full max-w-4xl">
-    <h1 class="text-4xl font-bold text-gray-800 mb-4">Meet Our Officers</h1>
-    <p class="text-lg text-gray-600 mb-12">Get to know the dedicated team leading our GDSC chapter</p>
+<div class="relative min-h-screen pt-32 pb-24 px-6 overflow-hidden">
+  
+  <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[400px] bg-gradient-to-b from-[#9f86ff]/10 to-transparent blur-3xl -z-10 pointer-events-none"></div>
+
+  <div class="w-full max-w-4xl mx-auto text-center mb-20 relative z-10">
+    <h1 class="hero-element text-5xl md:text-7xl font-extrabold mb-6 text-slate-900 dark:text-white tracking-tight">
+      Meet the <span class="bg-clip-text text-transparent bg-gradient-to-r from-[#9f86ff] to-[#3b82f6]">Minds</span> Behind GDSC
+    </h1>
+    <p class="hero-element text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+      Get to know the dedicated team of developers, designers, and community builders driving our mission forward.
+    </p>
   </div>
-  <div class="w-full max-w-6xl">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
+
+  <div class="officer-grid w-full max-w-7xl mx-auto relative z-10">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16 justify-items-center">
       {#each data.officers as officer}
-        <div class="w-full max-w-sm">
-          <OfficerImage
-            image={getImage(officer.name)}
-            name={officer.name}
-            role={officer.position}
-            description={officer.description}
-          />
+        <div class="officer-card w-full max-w-sm">
+          
+          <div class="w-full h-full transform transition-transform duration-300 hover:-translate-y-2">
+            <OfficerImage
+              image={getImage(officer.name)}
+              name={officer.name}
+              role={officer.position}
+              description={officer.description}
+            />
+          </div>
         </div>
       {/each}
     </div>

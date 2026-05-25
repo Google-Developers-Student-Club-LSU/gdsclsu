@@ -43,7 +43,6 @@
 <div class="relative min-h-screen flex flex-col items-center pt-32 pb-20 px-6 overflow-hidden">
   
   <div class="fade-container w-full max-w-4xl text-center mb-12 relative z-10">
-    <span class="text-[#9f86ff] font-bold tracking-wider uppercase text-sm mb-4 block">Partner With Us</span>
     <h1 class="text-5xl md:text-7xl font-extrabold mb-6 text-slate-900 dark:text-white tracking-tight">
       <span class="bg-clip-text text-transparent bg-gradient-to-r from-[#9f86ff] to-[#3b82f6]">Empower the Next</span> Generation.
     </h1>

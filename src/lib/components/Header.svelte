@@ -50,26 +50,28 @@
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <!-- svelte-ignore a11y_mouse_events_have_key_events -->
   <div class="relative flex gap-2 items-center" 
-       onmouseover={handleMouseOver} 
-       onmouseleave={handleMouseLeave}>
-      <div 
-          class="absolute top-0 bottom-0 bg-primary-color/20 rounded-full transition-all duration-300 ease-out pointer-events-none z-0"
-          style="width: {hoverProps.width}px; transform: translateX({hoverProps.left}px); opacity: {hoverProps.opacity};"
-      ></div>
+      bind:this={navContainer} 
+      onmouseover={handleMouseOver} 
+      onmouseleave={handleMouseLeave}>
+      
+    <div 
+      class="absolute top-0 bottom-0 bg-primary-color/20 rounded-full transition-all duration-300 ease-out pointer-events-none z-0"
+      style="width: {hoverProps.width}px; transform: translateX({hoverProps.left}px); opacity: {hoverProps.opacity};"
+    ></div>
 
-      <a href="/about" class="px-4 py-2 rounded-full relative z-10 transition-colors hover:text-primary-color font-medium">About</a>
-      <a href="/events" class="px-4 py-2 rounded-full relative z-10 transition-colors hover:text-primary-color font-medium">Events</a>
-      <a href="/officers" class="px-4 py-2 rounded-full relative z-10 transition-colors hover:text-primary-color font-medium">Officers</a>
-      <a href="/leaderboard" class="px-4 py-2 rounded-full relative z-10 transition-colors hover:text-primary-color font-medium">Leaderboard</a>
-      <a href="/sponsor" class="px-4 py-2 rounded-full relative z-10 transition-colors hover:text-primary-color font-medium">Sponsor</a>
+    <a href="/about" class="px-4 py-2 rounded-full relative z-10 transition-colors hover:text-primary-color font-medium">About</a>
+    <a href="/events" class="px-4 py-2 rounded-full relative z-10 transition-colors hover:text-primary-color font-medium">Events</a>
+    <a href="/officers" class="px-4 py-2 rounded-full relative z-10 transition-colors hover:text-primary-color font-medium">Officers</a>
+    <a href="/leaderboard" class="px-4 py-2 rounded-full relative z-10 transition-colors hover:text-primary-color font-medium">Leaderboard</a>
+    <a href="/sponsor" class="px-4 py-2 rounded-full relative z-10 transition-colors hover:text-primary-color font-medium">Sponsor</a>
 
-      {#if !loading}
-        {#if isOfficer}
-          <a href="/taskboard" class="px-4 py-2 rounded-full relative z-10 transition-colors hover:text-primary-color font-medium">Taskboard</a>
-        {/if}
-        {#if !user}
-          <a href="/login" class="px-4 py-2 rounded-full relative z-10 transition-colors hover:text-primary-color font-bold text-primary-color">Login</a>
-        {/if}
+    {#if !loading}
+      {#if isOfficer}
+        <a href="/taskboard" class="px-4 py-2 rounded-full relative z-10 transition-colors hover:text-primary-color font-medium">Taskboard</a>
       {/if}
+      {#if !user}
+        <a href="/login" class="px-4 py-2 rounded-full relative z-10 transition-colors hover:text-primary-color font-bold text-primary-color">Login</a>
+      {/if}
+    {/if}
   </div>
 </div>
