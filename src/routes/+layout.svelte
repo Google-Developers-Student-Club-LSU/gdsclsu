@@ -1,10 +1,12 @@
 <script lang="ts">
     import './layout.css';
-    import Header from "$lib/components/Header.svelte";
+    import VerticalHeader from "$lib/components/verticalHeader.svelte";
+    import HorizontalHeader from "$lib/components/horizontalHeader.svelte";
     import Footer from "$lib/components/Footer.svelte";
     import gdscLogo from "$lib/assets/GDSC.png";
     import type { LayoutData } from './$types';
     import { onMount } from 'svelte';
+	import { MediaQuery } from 'svelte/reactivity';
     import { getAuthInstance } from '$lib/firebase/auth';
     import Lenis from '@studio-freight/lenis';
 
@@ -12,9 +14,12 @@
 
     let showIntro = $state(false);
     let contentReady = $state(false);
+    let lenis: Lenis | null = null;
+
+    let mq = new MediaQuery('width < 54rem')
 
     onMount(() => {
-        const lenis = new Lenis({
+        lenis = new Lenis({
             duration: 1.2,
             easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // standard easing
             orientation: 'vertical',
@@ -22,8 +27,10 @@
             smoothWheel: true,
         });
 
+        (window as Window & { __lenis?: Lenis }).__lenis = lenis;
+
         function raf(time: number) {
-            lenis.raf(time);
+            lenis?.raf(time);
             requestAnimationFrame(raf);
         }
 
@@ -71,7 +78,12 @@
 
 {#if contentReady}
     <div class="animate-content-fade-up relative z-20">
-        <Header />
+        {#if mq.current}
+            <VerticalHeader />
+        {/if}
+        {#if !mq.current}
+            <HorizontalHeader />
+        {/if}
     </div>
 {/if}
 

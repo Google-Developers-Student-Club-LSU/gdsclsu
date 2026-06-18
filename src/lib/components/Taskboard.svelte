@@ -1033,7 +1033,11 @@ import { onMount, tick } from "svelte";
         justify-content: center;
     }
 
-    @media (max-width: 768px) {
+    @media (width < 54rem) {
+        .taskboard-header {
+            margin-top: 45px;
+        }
+        
         .taskboard-container {
             padding: 10px;
         }

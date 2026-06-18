@@ -65,7 +65,15 @@
     } 
 
     function formatDate(date: Date): string {
-        return date.toISOString().split('T')[0];
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function parseDateOnly(dateString: string): Date {
+        const [year, month, day] = dateString.split('-').map(Number);
+        return new Date(year, month - 1, day);
     }
 
     function formatDateDisplay(date: Date, view: ViewType): string {
@@ -623,7 +631,7 @@
             <div class="detail-body">
                 <div class="detail-row">
                     <strong>Date:</strong>
-                    <span>{new Date(selectedEvent.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                    <span>{parseDateOnly(selectedEvent.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
                 </div>
                 <div class="detail-row">
                     <strong>Time:</strong>
@@ -643,9 +651,8 @@
                 {/if}
             </div>
             <div class="modal-actions">
-            {#if authState.isOfficer}
-                <button type="button" class="btn btn-primary" onclick={() => openEventModal(null, selectedEvent)}>Edit</button>
-                <button type="button" class="btn btn-delete" onclick={() => handleDelete(selectedEvent)}>Delete</button>
+            {#if authState.isOfficer}<button type="button" class="btn btn-primary" onclick={() => selectedEvent && openEventModal(null, selectedEvent)}>Edit</button>
+                <button type="button" class="btn btn-delete" onclick={() => selectedEvent && handleDelete(selectedEvent)}>Delete</button>
             {/if}
             </div>
         </div>
@@ -1263,13 +1270,13 @@
         justify-content: center;
     }
 
-    @media (max-width: 768px) {
+    @media (width < 54rem) {
         .container {
             padding: 10px;
         }
 
         .header {
-            flex-direction: column;
+            margin-top: 45px;
             align-items: flex-start;
         }
 
@@ -1325,6 +1332,38 @@
         .modal-content {
             padding: 20px;
             width: 95%;
+        }
+
+        :global(.month-event) {
+            width: 12px;
+            height: 12px;
+            min-width: 12px;
+            min-height: 12px;
+            padding: 0;
+            border-radius: 999px;
+            flex: 0 0 12px;
+            text-indent: -9999px;
+            border-left: 100px;
+        }
+
+        :global(.event-blue.month-event) {
+        background-color: #1e40af;
+    }
+
+        :global(.event-green) {
+            background-color: #065f46;
+        }
+
+        :global(.event-purple) {
+            background-color: #6b21a8;
+        }
+
+        :global(.event-orange) {
+            background-color: #c2410c;
+        }
+
+        :global(.event-red) {
+            background-color: #b91c1c;
         }
     }
 

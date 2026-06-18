@@ -41,7 +41,7 @@
   
   <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[400px] bg-gradient-to-b from-[#9f86ff]/10 to-transparent blur-3xl -z-10 pointer-events-none"></div>
 
-  <div class="w-full max-w-4xl mx-auto text-center mb-20 relative z-10">
+  <div class="w-full max-w-4xl mx-auto text-center mb-10 relative z-10">
     <h1 class="hero-element text-5xl md:text-7xl font-extrabold mb-6 text-slate-900 dark:text-white tracking-tight">
       Meet the <span class="bg-clip-text text-transparent bg-gradient-to-r from-[#9f86ff] to-[#3b82f6]">Minds</span> Behind GDSC
     </h1>
@@ -54,7 +54,6 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16 justify-items-center">
       {#each data.officers as officer}
         <div class="officer-card w-full max-w-sm">
-          
           <div class="w-full h-full transform transition-transform duration-300 hover:-translate-y-2">
             <OfficerImage
               image={getImage(officer.name)}

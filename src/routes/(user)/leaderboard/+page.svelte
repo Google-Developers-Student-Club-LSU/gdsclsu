@@ -270,7 +270,7 @@
   {/if}
 
   <div class="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-    <div class="lg:col-span-2">
+    <div class="order-last lg:col-span-2 lg:order-first">
       <Leaderboard members={memberList} />
     </div>
 

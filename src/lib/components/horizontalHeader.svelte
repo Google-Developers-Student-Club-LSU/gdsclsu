@@ -41,8 +41,7 @@
             border-b border-white/20 dark:border-slate-800/50">
             
   <a href="/" class="flex items-center gap-2 group">
-    <img src={gdscLogo} alt="GDSC Logo" class="h-8 w-auto relative z-10 object-contain" />
-    <h1 class="relative z-10 font-bold text-xl whitespace-nowrap group-hover:opacity-80 transition-opacity">
+    <img src={gdscLogo} alt="GDSC Logo" class="h-8 w-auto relative z-10 object-contain" /><h1 class="relative z-10 font-bold text-xl whitespace-nowrap group-hover:opacity-80 transition-opacity ml-2">
       GDSC LSU
     </h1>
   </a>
