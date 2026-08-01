@@ -111,14 +111,12 @@
 {/if}
 
 {#if contentReady}
-    <div class="animate-content-fade-up relative z-20">
-        {#if mq.current}
-            <VerticalHeader />
-        {/if}
-        {#if !mq.current}
-            <HorizontalHeader />
-        {/if}
-    </div>
+    {#if mq.current}
+        <VerticalHeader />
+    {/if}
+    {#if !mq.current}
+        <HorizontalHeader />
+    {/if}
 {/if}
 
 <div class="relative z-10 min-h-dvh flex flex-col justify-between items-center bg-transparent">

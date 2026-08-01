@@ -17,13 +17,20 @@
   let focused = $state(false);
   let headerVisible = $derived(!scrolledPastTop || hovering || focused);
 
-  function updateScrollState() {
-    scrolledPastTop = window.scrollY > SCROLL_HIDE_THRESHOLD;
+  function getScrollY(): number {
+    const lenisInstance = (window as Window & { __lenis?: { scroll?: number } }).__lenis;
+    if (typeof lenisInstance?.scroll === "number") return lenisInstance.scroll;
+    return window.scrollY ?? document.documentElement.scrollTop ?? 0;
   }
 
   onMount(() => {
-    updateScrollState();
-    window.addEventListener("scroll", updateScrollState, { passive: true });
+    let rafId: number;
+
+    function pollScroll() {
+      scrolledPastTop = getScrollY() > SCROLL_HIDE_THRESHOLD;
+      rafId = requestAnimationFrame(pollScroll);
+    }
+    rafId = requestAnimationFrame(pollScroll);
 
     document.getElementById("theme-toggle")?.addEventListener("click", () => {
       document.body.classList.toggle("dark");
@@ -31,7 +38,7 @@
     });
 
     return () => {
-      window.removeEventListener("scroll", updateScrollState);
+      cancelAnimationFrame(rafId);
     };
   });
 
@@ -54,15 +61,16 @@
   }
 </script>
 
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-  class="fixed top-0 left-0 w-full h-4 z-60"
+  class="fixed top-0 left-0 w-full h-8 z-40"
   onmouseenter={() => (hovering = true)}
 ></div>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="flex items-center justify-between p-6 rounded-bl-lg rounded-br-lg w-full z-50 fixed top-0
-            animate-content-fade-up
+            header-fade-in
             bg-white/10 dark:bg-slate-900/10 backdrop-blur-md 
             border-b border-white/20 dark:border-slate-800/50
             transition-transform duration-300 ease-in-out motion-reduce:transition-none"
@@ -107,3 +115,24 @@
     {/if}
   </div>
 </div>
+
+<style>
+  .header-fade-in {
+    animation: headerFadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes headerFadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .header-fade-in {
+      animation: none;
+    }
+  }
+</style>

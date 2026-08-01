@@ -60,6 +60,8 @@
               name={officer.name}
               role={officer.position}
               description={officer.description}
+              github={officer.github}
+              linkedin={officer.linkedin}
             />
           </div>
         </div>
