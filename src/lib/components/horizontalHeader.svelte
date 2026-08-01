@@ -10,11 +10,29 @@
   let hoverProps = $state({ width: 0, left: 0, opacity: 0 });
   let navContainer: HTMLElement | undefined = $state(undefined);
 
+  const SCROLL_HIDE_THRESHOLD = 24;
+
+  let scrolledPastTop = $state(false);
+  let hovering = $state(false);
+  let focused = $state(false);
+  let headerVisible = $derived(!scrolledPastTop || hovering || focused);
+
+  function updateScrollState() {
+    scrolledPastTop = window.scrollY > SCROLL_HIDE_THRESHOLD;
+  }
+
   onMount(() => {
+    updateScrollState();
+    window.addEventListener("scroll", updateScrollState, { passive: true });
+
     document.getElementById("theme-toggle")?.addEventListener("click", () => {
       document.body.classList.toggle("dark");
       localStorage.theme = document.body.classList.contains("dark") ? "dark" : "light";
     });
+
+    return () => {
+      window.removeEventListener("scroll", updateScrollState);
+    };
   });
 
   function handleMouseOver(e: MouseEvent) {
@@ -36,9 +54,24 @@
   }
 </script>
 
-<div class="flex items-center justify-between p-6 rounded-bl-lg rounded-br-lg w-full z-50 absolute top-0 
+<div
+  class="fixed top-0 left-0 w-full h-4 z-60"
+  onmouseenter={() => (hovering = true)}
+></div>
+
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+  class="flex items-center justify-between p-6 rounded-bl-lg rounded-br-lg w-full z-50 fixed top-0
+            animate-content-fade-up
             bg-white/10 dark:bg-slate-900/10 backdrop-blur-md 
-            border-b border-white/20 dark:border-slate-800/50">
+            border-b border-white/20 dark:border-slate-800/50
+            transition-transform duration-300 ease-in-out motion-reduce:transition-none"
+  style="transform: translateY({headerVisible ? '0' : '-100%'});"
+  onmouseenter={() => (hovering = true)}
+  onmouseleave={() => (hovering = false)}
+  onfocusin={() => (focused = true)}
+  onfocusout={() => (focused = false)}
+>
             
   <a href="/" class="flex items-center gap-2 group">
     <img src={gdscLogo} alt="GDSC Logo" class="h-8 w-auto relative z-10 object-contain" /><h1 class="relative z-10 font-bold text-xl whitespace-nowrap group-hover:opacity-80 transition-opacity ml-2">

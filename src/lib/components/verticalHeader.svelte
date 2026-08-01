@@ -75,6 +75,7 @@
 </script>
 
 <div class="flex items-center flex-col p-6 w-full z-50 absolute top-0
+            animate-content-fade-up
             bg-white/50 dark:bg-slate-900/10 backdrop-blur-xl 
             border-b border-white/20 dark:border-slate-800/50">
             

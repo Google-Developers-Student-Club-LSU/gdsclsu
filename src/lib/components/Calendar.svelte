@@ -39,7 +39,6 @@
     let eventStart: HTMLInputElement | undefined = $state(undefined);
     let eventEnd: HTMLInputElement | undefined = $state(undefined);
     let eventDescription: HTMLTextAreaElement | undefined = $state(undefined);
-    let eventColor: HTMLSelectElement | undefined = $state(undefined);
     let calendarContainer: HTMLDivElement | undefined = $state(undefined);
     let prevBtn: HTMLButtonElement | undefined = $state(undefined);
     let nextBtn: HTMLButtonElement | undefined = $state(undefined);
@@ -48,12 +47,43 @@
     let timeGrid: HTMLDivElement | undefined = $state(undefined);
 
     let events: Event[] = $state([]);
+    let loadingEvents: boolean = $state(true);
     let editingEventId = $state<string | null>(null);
     let selectedEvent: Event | null = $state(null);
     let showDetailModal: boolean = $state(false);
+    let eventModalOpen: boolean = $state(false);
     let currentView: ViewType = $state('week');
     let currentDate: Date = $state(new Date());
     let dateDisplay = $state("");
+    let formColor = $state('blue');
+
+    const EVENT_COLORS: { key: string; label: string; hex: string }[] = [
+        { key: 'blue', label: 'Peacock', hex: '#039be5' },
+        { key: 'green', label: 'Basil', hex: '#0b8043' },
+        { key: 'purple', label: 'Grape', hex: '#8e24aa' },
+        { key: 'orange', label: 'Tangerine', hex: '#f4511e' },
+        { key: 'red', label: 'Tomato', hex: '#d50000' },
+    ];
+
+    function getColorMeta(key: string) {
+        return EVENT_COLORS.find(c => c.key === key) ?? EVENT_COLORS[0];
+    }
+
+    const FEATURED_EVENT = {
+        title: 'GeauxHack 2026',
+        dateLabel: 'Saturday, October 23',
+        description: 'Coming soon',
+        ctaLabel: 'Reserve your spot',
+        ctaLink: '#',
+    };
+
+    let upcomingEvents = $derived.by(() => {
+        const todayStr = formatDate(new Date());
+        return events
+            .filter(e => e.date >= todayStr)
+            .sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime))
+            .slice(0, 5);
+    });
 
     function generateEventPin(): string {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -304,7 +334,7 @@
                 if (eventStart) eventStart.value = event.startTime;
                 if (eventEnd) eventEnd.value = event.endTime;
                 if (eventDescription) eventDescription.value = event.description || '';
-                if (eventColor) eventColor.value = event.color;
+                formColor = event.color;
                 editingEventId = event.id;
             } else {
                 if (modalTitle) modalTitle.textContent = 'Add New Event'
@@ -313,23 +343,25 @@
                 if (eventStart) eventStart.value = hour ? `${hour.toString().padStart(2, '0')}:00` : `09:00`
                 if (eventEnd) eventEnd.value = hour ? `${(hour+1).toString().padStart(2, '0')}:00` : `10:00`
                 if (eventDescription) eventDescription.value = '';
-                if (eventColor) eventColor.value = 'blue';
+                formColor = 'blue';
                 editingEventId = null;
             }
 
-            if (eventModal) {
-                eventModal.style.display = 'flex';
-                eventModal.style.alignItems = 'center';
-                eventModal.style.justifyContent = 'center';
-            }
+            eventModalOpen = true;
             if (eventTitle) eventTitle.focus();
         }
 
     }
 
     function closeEventModal() {
-        if (eventModal) eventModal.style.display = 'none';
+        eventModalOpen = false;
         editingEventId = null;
+    }
+
+    function handleGlobalKeydown(e: KeyboardEvent) {
+        if (e.key !== 'Escape') return;
+        if (eventModalOpen) closeEventModal();
+        else if (showDetailModal) closeDetailModal();
     }
 
     async function saveEvent(e: SubmitEvent) {
@@ -345,7 +377,7 @@
         const date = eventDate?.value || '';
         const startTime = eventStart?.value || '';
         const endTime = eventEnd?.value || '';
-        const color = eventColor?.value || 'blue';
+        const color = formColor || 'blue';
 
         if (!title || !date || !startTime || !endTime) {
             alert('Please fill in all required fields.')
@@ -570,6 +602,8 @@
             }) as Event[];
         } catch (error) {
             console.error("Failed ot load events from database:", error);
+        } finally {
+            loadingEvents = false;
         }
 
         tick().then(() => {
@@ -579,27 +613,98 @@
 
 </script>
 
+<svelte:window onkeydown={handleGlobalKeydown} />
+
 <div class="container">
-    <div class="header">
-        <h1>GDSC Event Calendar</h1>
-        <div class="header-controls">
-            <div class="view-switcher">
-                <button class="btn btn-view {currentView === 'week' ? 'active' : ''}" id="weekViewBtn" bind:this={weekViewBtn}>Week</button>
-                <button class="btn btn-view {currentView === 'month' ? 'active' : ''}" id="monthViewBtn" bind:this={monthViewBtn}>Month</button>
+    <div class="highlights">
+        <div class="highlight-card upcoming-card">
+            <div class="highlight-eyebrow">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+                Upcoming Events
             </div>
-            <div class="date-navigation">
-                <button class="btn btn-nav" id="prevBtn" bind:this={prevBtn}>‹</button>
-                <div class="date-display" id="dateDisplay">{dateDisplay}</div>
-                <button class="btn btn-nav" id="nextBtn" bind:this={nextBtn}>›</button>
-            </div>
+
+            {#if loadingEvents}
+                <p class="highlight-empty">Loading events…</p>
+            {:else if upcomingEvents.length === 0}
+                <p class="highlight-empty">Nothing on the calendar yet — check back soon.</p>
+            {:else}
+                <ul class="upcoming-list">
+                    {#each upcomingEvents as ev (ev.id)}
+                        <li>
+                            <button type="button" class="upcoming-item" style="--swatch-color: {getColorMeta(ev.color).hex}" onclick={() => openDetailModal(ev)}>
+                                <span class="upcoming-date-chip">
+                                    <span class="upcoming-date-month">{parseDateOnly(ev.date).toLocaleDateString('en-US', { month: 'short' })}</span>
+                                    <span class="upcoming-date-day">{parseDateOnly(ev.date).getDate()}</span>
+                                </span>
+                                <span class="upcoming-info">
+                                    <span class="upcoming-title">{ev.title}</span>
+                                    <span class="upcoming-time">{formatTimeWithAmPm(ev.startTime)} – {formatTimeWithAmPm(ev.endTime)}</span>
+                                </span>
+                            </button>
+                        </li>
+                    {/each}
+                </ul>
+            {/if}
+        </div>
+
+        <div class="highlight-card featured-card">
+            <span class="featured-badge">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 6.9L12 17.3 5.7 20.8l1.7-6.9L2 9.2l7.1-.6L12 2z"/></svg>
+                Featured
+            </span>
+            <h2 class="featured-title">{FEATURED_EVENT.title}</h2>
+            <p class="featured-meta">{FEATURED_EVENT.dateLabel}</p>
+            <p class="featured-desc">{FEATURED_EVENT.description}</p>
+            {#if FEATURED_EVENT.ctaLabel}
+                <a class="featured-cta" href={FEATURED_EVENT.ctaLink} target="_blank" rel="noopener noreferrer">
+                    {FEATURED_EVENT.ctaLabel}
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </a>
+            {/if}
         </div>
     </div>
 
-    <div class="controls">
-        {#if user}
-            <button class="btn btn-primary" id="addEventBtn" bind:this={addEventBtn}>+ Add Event</button>
-        {/if}
-        <button class="btn btn-primary" id="todayBtn" bind:this={todayBtn}>Today</button>
+    <div class="toolbar">
+        <div class="toolbar-brand">
+            <div class="cal-badge" aria-hidden="true">
+                <div class="cal-badge-tabs">
+                    <span class="tab tab-blue"></span>
+                    <span class="tab tab-green"></span>
+                    <span class="tab tab-yellow"></span>
+                    <span class="tab tab-red"></span>
+                </div>
+                <div class="cal-badge-date">{new Date().getDate()}</div>
+            </div>
+            <div class="toolbar-titles">
+                <h1>GDG Event Calendar</h1>
+                <div class="date-display" id="dateDisplay">{dateDisplay}</div>
+            </div>
+        </div>
+
+        <div class="toolbar-nav">
+            <button class="btn btn-today" id="todayBtn" bind:this={todayBtn}>Today</button>
+            <div class="nav-arrows">
+                <button class="btn btn-nav" id="prevBtn" bind:this={prevBtn} aria-label="Previous {currentView}">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <button class="btn btn-nav" id="nextBtn" bind:this={nextBtn} aria-label="Next {currentView}">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="toolbar-actions">
+            <div class="view-switcher" role="group" aria-label="Calendar view">
+                <button class="btn btn-view {currentView === 'week' ? 'active' : ''}" id="weekViewBtn" bind:this={weekViewBtn} aria-pressed={currentView === 'week'}>Week</button>
+                <button class="btn btn-view {currentView === 'month' ? 'active' : ''}" id="monthViewBtn" bind:this={monthViewBtn} aria-pressed={currentView === 'month'}>Month</button>
+            </div>
+            {#if user}
+                <button class="btn btn-create" id="addEventBtn" bind:this={addEventBtn}>
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                    <span>Create</span>
+                </button>
+            {/if}
+        </div>
     </div>
 
     <div class="calendar-container {currentView === 'week' ? 'week-view' : ''}" bind:this={calendarContainer}>
@@ -639,8 +744,9 @@
                 </div>
                 <div class="detail-row">
                     <strong>Color:</strong>
-                    <span>
-                        {selectedEvent.color}
+                    <span class="detail-color">
+                        <span class="detail-color-dot" style="--swatch-color: {getColorMeta(selectedEvent.color).hex}"></span>
+                        {getColorMeta(selectedEvent.color).label}
                     </span>
                 </div>
                 {#if selectedEvent.description}
@@ -659,7 +765,7 @@
     </div>
 {/if}
 
-<div class="modal" id="eventModal" bind:this={eventModal}>
+<div class="modal {eventModalOpen ? 'open' : ''}" id="eventModal" bind:this={eventModal} role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-content">
         <h3 id="modalTitle" bind:this={modalTitle}>Add New Event</h3>
         <form id="eventForm" bind:this={eventForm}>
@@ -689,14 +795,23 @@
             </div>
 
             <div class="form-group">
-                <label for="eventColor">Event Color</label>
-                <select id="eventColor" bind:this={eventColor}>
-                    <option value="red">Red</option>
-                    <option value="orange">Orange</option>
-                    <option value="green">Green</option>
-                    <option value="blue">Blue</option>
-                    <option value="purple">Purple</option>
-                </select>
+                <span class="swatch-label" id="eventColorLabel">Event Color</span>
+                <div class="swatch-row" role="radiogroup" aria-labelledby="eventColorLabel">
+                    {#each EVENT_COLORS as c (c.key)}
+                        <button
+                            type="button"
+                            class="color-swatch {formColor === c.key ? 'selected' : ''}"
+                            style="--swatch-color: {c.hex}"
+                            role="radio"
+                            aria-checked={formColor === c.key}
+                            aria-label={c.label}
+                            title={c.label}
+                            onclick={() => formColor = c.key}
+                        >
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                        </button>
+                    {/each}
+                </div>
             </div>
 
             <div class="modal-actions">
@@ -714,168 +829,465 @@
         box-sizing: border-box;
     }
 
+    :global(:root) {
+        --gcal-surface: var(--color-background-secondary-light, #ffffff);
+        --gcal-surface-muted: #f8f9fa;
+        --gcal-outline: #e3e6ea;
+        --gcal-outline-soft: #eef0f3;
+        --gcal-text: var(--color-primary-text, #1c1b1d);
+        --gcal-text-muted: #5f6368;
+        --gcal-primary: var(--color-primary-color, #9f86ff);
+        --gcal-primary-tint-1: rgba(159, 134, 255, 0.08);
+        --gcal-primary-tint-2: rgba(159, 134, 255, 0.16);
+        --gcal-primary-tint-3: rgba(159, 134, 255, 0.32);
+        --gcal-shadow-1: 0 1px 2px rgba(60, 64, 67, 0.10), 0 1px 3px rgba(60, 64, 67, 0.12);
+        --gcal-shadow-2: 0 2px 6px rgba(60, 64, 67, 0.14), 0 1px 2px rgba(60, 64, 67, 0.10);
+        --gcal-shadow-3: 0 8px 24px rgba(60, 64, 67, 0.20), 0 2px 6px rgba(60, 64, 67, 0.12);
+    }
+
+    :global(.dark) {
+        --gcal-surface: var(--color-background-secondary-dark, #373740);
+        --gcal-surface-muted: rgba(255, 255, 255, 0.04);
+        --gcal-outline: rgba(255, 255, 255, 0.12);
+        --gcal-outline-soft: rgba(255, 255, 255, 0.07);
+        --gcal-text: var(--color-primary-text-dark, #ffffff);
+        --gcal-text-muted: #9aa0a6;
+        --gcal-primary-tint-1: rgba(159, 134, 255, 0.14);
+        --gcal-primary-tint-2: rgba(159, 134, 255, 0.24);
+        --gcal-primary-tint-3: rgba(159, 134, 255, 0.4);
+        --gcal-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3);
+        --gcal-shadow-2: 0 2px 6px rgba(0, 0, 0, 0.4);
+        --gcal-shadow-3: 0 8px 28px rgba(0, 0, 0, 0.55);
+    }
+
     .container {
         max-width: 98dvw;
         margin: 0 auto;
         padding: 20px;
         margin-top: 6vmin;
+        color: var(--gcal-text);
     }
 
-    .header {
-        background: white;
-        border-radius: 12px;
-        padding: 20px 30px;
-        margin-bottom: 20px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    .highlights {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
+        align-items: stretch;
+    }
+
+    .highlight-card {
+        background: var(--gcal-surface);
+        border-radius: 20px;
+        padding: 20px 22px;
+        box-shadow: var(--gcal-shadow-1);
+    }
+
+    .highlight-eyebrow {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        flex-wrap: wrap;
-        gap: 20px;
-    }
-
-    .header h1 {
-        font-size: 24px;
+        gap: 8px;
+        font-size: 13px;
         font-weight: 600;
-        color: #0f172a;
+        letter-spacing: 0.02em;
+        color: var(--gcal-text-muted);
+        margin-bottom: 14px;
     }
 
-    .header-controls {
+    .highlight-empty {
+        font-size: 14px;
+        color: var(--gcal-text-muted);
+        padding: 8px 0 4px;
+    }
+
+    .upcoming-list {
+        list-style: none;
         display: flex;
-        gap: 20px;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .upcoming-item {
+        width: 100%;
+        display: flex;
         align-items: center;
+        gap: 14px;
+        padding: 8px;
+        border: none;
+        background: transparent;
+        border-radius: 12px;
+        cursor: pointer;
+        font-family: inherit;
+        text-align: left;
+        transition: background-color 0.15s ease;
+    }
+
+    .upcoming-item:hover {
+        background: var(--gcal-surface-muted);
+    }
+
+    .upcoming-item:focus-visible {
+        outline: 2px solid var(--gcal-primary);
+        outline-offset: 2px;
+    }
+
+    .upcoming-date-chip {
+        flex-shrink: 0;
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        background: var(--swatch-color);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        line-height: 1.1;
+    }
+
+    .upcoming-date-month {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        opacity: 0.9;
+    }
+
+    .upcoming-date-day {
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .upcoming-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    .upcoming-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--gcal-text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .upcoming-time {
+        font-size: 12px;
+        color: var(--gcal-text-muted);
+    }
+
+    .featured-card {
+        display: flex;
+        flex-direction: column;
+        background: linear-gradient(155deg, var(--gcal-primary-tint-2), var(--gcal-surface) 55%);
+        border: 1px solid var(--gcal-primary-tint-3);
+    }
+
+    .featured-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        align-self: flex-start;
+        background: var(--gcal-primary);
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        padding: 5px 12px;
+        border-radius: 999px;
+        margin-bottom: 12px;
+    }
+
+    .featured-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--gcal-text);
+        letter-spacing: -0.01em;
+        margin-bottom: 4px;
+    }
+
+    .featured-meta {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--gcal-primary);
+        margin-bottom: 10px;
+    }
+
+    .featured-desc {
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--gcal-text-muted);
+        margin-bottom: 16px;
+        flex-grow: 1;
+    }
+
+    .featured-cta {
+        align-self: flex-start;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--gcal-primary);
+        color: white;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        padding: 9px 16px;
+        border-radius: 999px;
+        box-shadow: var(--gcal-shadow-1);
+        transition: box-shadow 0.15s ease, transform 0.1s ease;
+    }
+
+    .featured-cta:hover {
+        box-shadow: var(--gcal-shadow-2);
+        transform: translateY(-1px);
+    }
+
+    .featured-cta:focus-visible {
+        outline: 2px solid var(--gcal-text);
+        outline-offset: 2px;
+    }
+
+    /* ---------- Toolbar ---------- */
+
+    .toolbar {
+        background: var(--gcal-surface);
+        border-radius: 20px;
+        padding: 14px 20px;
+        margin-bottom: 16px;
+        box-shadow: var(--gcal-shadow-1);
+        display: flex;
+        align-items: center;
+        gap: 20px;
         flex-wrap: wrap;
+    }
+
+    .toolbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-right: auto;
+    }
+
+    .cal-badge {
+        width: 38px;
+        height: 38px;
+        border-radius: 9px;
+        background: var(--gcal-surface);
+        border: 1px solid var(--gcal-outline);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        flex-shrink: 0;
+        box-shadow: var(--gcal-shadow-1);
+    }
+
+    .cal-badge-tabs {
+        display: flex;
+        height: 9px;
+        flex-shrink: 0;
+    }
+
+    .cal-badge-tabs .tab {
+        flex: 1;
+    }
+
+    .tab-blue { background: #4285f4; }
+    .tab-green { background: #34a853; }
+    .tab-yellow { background: #fbbc05; }
+    .tab-red { background: #ea4335; }
+
+    .cal-badge-date {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        font-weight: 700;
+        color: #ea4335;
+        line-height: 1;
+    }
+
+    .toolbar-titles {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .toolbar-titles h1 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--gcal-text);
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+    }
+
+    .toolbar-nav {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .date-display {
+        font-size: 13px;
+        color: var(--gcal-text-muted);
+        font-weight: 500;
+    }
+
+    .toolbar-titles .date-display {
+        font-size: 13px;
+    }
+
+    .nav-arrows {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+    }
+
+    .toolbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-left: auto;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 500;
+        font-family: inherit;
+        cursor: pointer;
+        transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .btn:focus-visible {
+        outline: 2px solid var(--gcal-primary);
+        outline-offset: 2px;
+    }
+
+    .btn-today {
+        background: transparent;
+        color: var(--gcal-text-muted);
+        border: 1px solid var(--gcal-outline);
+        padding: 7px 16px;
+    }
+
+    .btn-today:hover {
+        background: var(--gcal-surface-muted);
+        color: var(--gcal-text);
+    }
+
+    .btn-nav {
+        background: transparent;
+        border: none;
+        border-radius: 50%;
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        color: var(--gcal-text-muted);
+    }
+
+    .btn-nav:hover {
+        background: var(--gcal-surface-muted);
+        color: var(--gcal-text);
     }
 
     .view-switcher {
         display: flex;
-        gap: 5px;
-        background: #f1f5f9;
-        padding: 4px;
-        border-radius: 8px;
+        gap: 2px;
+        background: var(--gcal-surface-muted);
+        border: 1px solid var(--gcal-outline-soft);
+        padding: 3px;
+        border-radius: 999px;
     }
 
     .btn-view {
         padding: 6px 16px;
         background: transparent;
         border: none;
-        border-radius: 6px;
-        font-size: 14px;
+        border-radius: 999px;
+        font-size: 13px;
         font-weight: 500;
         cursor: pointer;
-        transition: all 0.2s ease;
-        color: #64748b;
+        transition: all 0.15s ease;
+        color: var(--gcal-text-muted);
     }
 
     .btn-view:hover {
-        color: white;
-        background-color: #c6b8ff;
+        color: var(--gcal-text);
     }
 
     .btn-view.active {
-        background-color: #9f86ff;
-        color: white;
-    }
-
-    .date-navigation {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-
-    .btn-nav {
-        padding: 6px 12px;
-        background: #f1f5f9;
-        border: none;
-        border-radius: 6px;
-        font-size: 18px;
+        background-color: var(--gcal-surface);
+        color: var(--gcal-primary);
+        box-shadow: var(--gcal-shadow-1);
         font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        color: #475569;
-        width: 36px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
 
-    .btn-nav:hover {
-        background: #e2e8f0;
-        color: #0f172a;
+    .btn-create {
+        background-color: var(--gcal-primary);
+        color: white;
+        padding: 10px 20px 10px 16px;
+        box-shadow: var(--gcal-shadow-2);
+        font-weight: 600;
     }
 
-    .date-display {
-        font-size: 16px;
-        color: #64748b;
-        font-weight: 500;
-        min-width: 200px;
-        text-align: center;
-    }
-
-    .controls {
-        background: white;
-        border-radius: 12px;
-        padding: 20px 30px;
-        margin-bottom: 20px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        display: flex;
-        gap: 15px;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-
-    .btn {
-        padding: 8px 16px;
-        border: none;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        gap: 6px;
+    .btn-create:hover {
+        box-shadow: var(--gcal-shadow-3);
+        transform: translateY(-1px);
     }
 
     .btn-primary {
-        background-color: #9f86ff;
+        background-color: var(--gcal-primary);
         color: white;
     }
 
     .btn-primary:hover {
-        background-color: #9681e9;
+        filter: brightness(1.06);
         transform: translateY(-1px);
     }
 
     .btn-secondary {
-        background-color: #f1f5f9;
-        color: #475569;
-        border: 1px solid #e2e8f0;
-    }
-
-    .btn-delete{
-        background-color: #b91c1c;
-        color: white;
-        border: 1px solid #e2e8f0;
+        background-color: var(--gcal-surface-muted);
+        color: var(--gcal-text-muted);
+        border: 1px solid var(--gcal-outline);
     }
 
     .btn-secondary:hover {
-        background-color: #e2e8f0;
-        transform: translateY(-1px);
+        background-color: var(--gcal-outline-soft);
+    }
+
+    .btn-delete {
+        background-color: #d93025;
+        color: white;
+    }
+
+    .btn-delete:hover {
+        filter: brightness(1.08);
     }
 
     .calendar-container {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        background: var(--gcal-surface);
+        border-radius: 20px;
+        box-shadow: var(--gcal-shadow-1);
+        overflow: hidden;
     }
 
     :global(.calendar-container.week-view) {
         position: relative;
         display: block !important;
-        background: white;
-        border: 1px solid #e2e8f0;
+        background: var(--gcal-surface);
+        border: 1px solid var(--gcal-outline);
         box-sizing: border-box;
     }
 
@@ -896,11 +1308,11 @@
     }
 
     .time-labels {
-        background-color: #f8fafc;
-        border-right: 1px solid #e2e8f0;
+        background-color: var(--gcal-surface);
+        border-right: 1px solid var(--gcal-outline);
     }
 
-   :global(.time-labels.week-labels) {
+    :global(.time-labels.week-labels) {
         padding-top: 60px;
         display: flex;
         flex-direction: column;
@@ -909,21 +1321,22 @@
         flex-shrink: 0;
         height: 1500px !important;
     }
+
     :global(.time-label) {
         height: 60px;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
-        font-size: 12px;
-        color: #64748b;
+        transform: translateY(-6px);
+        font-size: 11px;
+        color: var(--gcal-text-muted);
         font-weight: 500;
-        border-bottom: 1px solid #f1f5f9;
         flex-shrink: 0;
     }
 
     .calendar-body {
         position: relative;
-        background: white;
+        background: var(--gcal-surface);
     }
 
     :global(.calendar-body.week-body) {
@@ -939,8 +1352,8 @@
         position: sticky;
         top: 0;
         z-index: 50;
-        background: #f8fafc;
-        border-bottom: 2px solid #e2e8f0;
+        background: var(--gcal-surface);
+        border-bottom: 1px solid var(--gcal-outline);
         display: grid;
         grid-template-columns: repeat(7, 1fr);
         width: 100%;
@@ -953,16 +1366,23 @@
         grid-template-columns: repeat(7, 1fr);
         position: relative;
         height: 1500px;
+        background-image: repeating-linear-gradient(
+            to bottom,
+            var(--gcal-outline-soft) 0,
+            var(--gcal-outline-soft) 1px,
+            transparent 1px,
+            transparent 60px
+        );
     }
 
     :global(.week-day-header) {
         height: 60px;
-        padding: 0; 
+        padding: 0;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        border-right: 1px solid #e2e8f0;
+        border-right: 1px solid var(--gcal-outline-soft);
     }
 
     :global(.week-day-header:last-child) {
@@ -970,38 +1390,39 @@
     }
 
     :global(.week-day-name) {
-        font-size: 12px;
-        color: #64748b;
+        font-size: 11px;
+        color: var(--gcal-text-muted);
         font-weight: 600;
+        letter-spacing: 0.04em;
         text-transform: uppercase;
         margin-bottom: 4px;
     }
 
     :global(.week-day-number) {
-        font-size: 18px;
-        color: #0f172a;
-        font-weight: 600;
+        font-size: 16px;
+        color: var(--gcal-text);
+        font-weight: 500;
     }
 
     :global(.week-day-number.today) {
-        background-color: #9f86ff;
+        background-color: var(--gcal-primary);
         color: white;
-        width: 32px;
-        height: 32px;
+        width: 30px;
+        height: 30px;
         border-radius: 50%;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         margin: 0 auto;
+        font-weight: 700;
     }
 
     :global(.time-slot) {
         height: 60px;
-        border-bottom: 1px solid #f1f5f9;
-        border-right: 1px solid #f1f5f9;
+        border-right: 1px solid var(--gcal-outline-soft);
         position: relative;
         cursor: pointer;
-        transition: background-color 0.2s ease;
+        transition: background-color 0.15s ease;
     }
 
     :global(.week-time-slots :global(.time-slot:nth-child(7n))) {
@@ -1009,11 +1430,11 @@
     }
 
     :global(.time-slot:hover) {
-        background-color: #f8fafc;
+        background-color: var(--gcal-primary-tint-1);
     }
 
     .month-container {
-        padding: 20px;
+        padding: 16px;
     }
 
     .month-body {
@@ -1024,25 +1445,21 @@
     :global(.month-header) {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
-        background: #f8fafc;
-        border-bottom: 2px solid #e2e8f0;
+        background: var(--gcal-surface);
+        border-bottom: 1px solid var(--gcal-outline);
         position: sticky;
         top: 0;
         z-index: 20;
     }
 
     :global(.month-day-header) {
-        padding: 12px;
+        padding: 10px;
         text-align: center;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 600;
-        color: #64748b;
+        letter-spacing: 0.04em;
+        color: var(--gcal-text-muted);
         text-transform: uppercase;
-        border-right: 1px solid #e2e8f0;
-    }
-
-    :global(.month-day-header:last-child) {
-        border-right: none;
     }
 
     :global(.month-grid) {
@@ -1050,42 +1467,50 @@
         grid-template-columns: repeat(7, 1fr);
         grid-auto-rows: 1fr;
         gap: 1px;
-        background: #e2e8f0;
+        background: var(--gcal-outline-soft);
+        border: 1px solid var(--gcal-outline-soft);
     }
 
     :global(.month-day-cell) {
-        --cell-bg: white;
+        --cell-bg: var(--gcal-surface);
         background: var(--cell-bg);
         height: 100px;
-        padding: 8px;
+        padding: 6px 6px 8px;
         cursor: pointer;
-        transition: background-color 0.2s ease;
+        transition: background-color 0.15s ease;
         position: relative;
         display: flex;
         flex-direction: column;
     }
 
     :global(.month-day-cell:hover) {
-        background: #f8fafc;
+        background: var(--gcal-primary-tint-1);
     }
 
     :global(.month-day-cell.other-month) {
-        --cell-bg: #f8fafc;
+        --cell-bg: var(--gcal-surface);
         background: var(--cell-bg);
-        color: #94a3b8;
+        color: var(--gcal-text-muted);
+        opacity: 0.5;
     }
 
     :global(.month-day-cell.today) {
-        --cell-bg: #dbeafe;
+        --cell-bg: var(--gcal-primary-tint-1);
         background: var(--cell-bg);
     }
 
     :global(.month-day-number) {
-        font-size: 14px;
+        font-size: 12px;
         font-weight: 600;
-        color: #0f172a;
+        color: var(--gcal-text);
         margin-bottom: 4px;
         flex-shrink: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
     }
 
     :global(.month-day-events) {
@@ -1104,28 +1529,29 @@
         left: 0;
         right: 0;
         height: 24px;
-        background: linear-gradient(to top, var(--cell-bg, white), transparent);
+        background: linear-gradient(to top, var(--cell-bg, var(--gcal-surface)), transparent);
         pointer-events: none;
         z-index: 5;
     }
 
     :global(.month-day-cell.other-month .month-day-number) {
-        color: #94a3b8;
+        color: var(--gcal-text-muted);
     }
 
     :global(.month-day-cell.today .month-day-number) {
-        color: #9f86ff;
+        background: var(--gcal-primary);
+        color: white;
         font-weight: 700;
     }
 
     :global(.event) {
         border-radius: 4px;
-        padding: 4px 8px;
+        padding: 3px 7px;
         font-size: 11px;
         font-weight: 500;
+        color: white;
         cursor: pointer;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        transition: filter 0.15s ease, box-shadow 0.15s ease;
         overflow: hidden;
         z-index: 10;
         white-space: nowrap;
@@ -1136,47 +1562,25 @@
         position: absolute;
         left: 4px;
         right: 4px;
+        border-radius: 6px;
+        padding: 4px 8px;
     }
 
     :global(.event:hover) {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        filter: brightness(1.08);
+        box-shadow: var(--gcal-shadow-2);
     }
 
-    :global(.event-blue) {
-        background-color: #dbeafe;
-        color: #1e40af;
-        border-left: 3px solid #3b82f6;
-    }
-
-    :global(.event-green) {
-        background-color: #d1fae5;
-        color: #065f46;
-        border-left: 3px solid #10b981;
-    }
-
-    :global(.event-purple) {
-        background-color: #e9d5ff;
-        color: #6b21a8;
-        border-left: 3px solid #8b5cf6;
-    }
-
-    :global(.event-orange) {
-        background-color: #fed7aa;
-        color: #c2410c;
-        border-left: 3px solid #f97316;
-    }
-
-    :global(.event-red) {
-        background-color: #fecaca;
-        color: #b91c1c;
-        border-left: 3px solid #ef4444;
-    }
+    :global(.event-blue) { background-color: #039be5; }
+    :global(.event-green) { background-color: #0b8043; }
+    :global(.event-purple) { background-color: #8e24aa; }
+    :global(.event-orange) { background-color: #f4511e; }
+    :global(.event-red) { background-color: #d50000; }
 
     :global(.month-event) {
         position: relative;
         flex-shrink: 0;
-        padding: 4px 8px;
+        padding: 3px 7px;
         font-size: 11px;
         border-radius: 4px;
         width: 100%;
@@ -1186,6 +1590,17 @@
         text-overflow: ellipsis;
     }
 
+    :global(.event-title) {
+        font-weight: 600;
+        font-size: 11px;
+    }
+
+    :global(.event-time) {
+        font-size: 10px;
+        opacity: 0.9;
+        margin-top: 1px;
+    }
+
     .modal {
         display: none;
         position: fixed;
@@ -1193,70 +1608,136 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
+        background-color: rgba(32, 33, 36, 0.5);
         z-index: 1000;
-        backdrop-filter: blur(4px);
+        backdrop-filter: blur(3px);
     }
 
+    .modal.open,
     .modal.detail-modal {
         display: flex;
         align-items: center;
         justify-content: center;
     }
 
+    @keyframes gcalScrimIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes gcalDialogIn {
+        from { opacity: 0; transform: translateY(8px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal.open,
+    .modal.detail-modal {
+        animation: gcalScrimIn 0.15s ease;
+    }
+
     .modal-content {
         position: relative;
-        background: white;
-        border-radius: 12px;
-        padding: 30px;
+        background: var(--gcal-surface);
+        color: var(--gcal-text);
+        border-radius: 24px;
+        padding: 28px;
         width: 90%;
-        max-width: 400px;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        max-width: 420px;
+        box-shadow: var(--gcal-shadow-3);
+        animation: gcalDialogIn 0.18s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .modal.open, .modal.detail-modal, .modal-content {
+            animation: none;
+        }
     }
 
     .modal h3 {
         margin-bottom: 20px;
-        color: #0f172a;
+        color: var(--gcal-text);
         font-size: 18px;
         font-weight: 600;
     }
 
     .form-group {
-        margin-bottom: 15px;
+        margin-bottom: 16px;
     }
 
-    .form-group label {
+    .form-group label,
+    .swatch-label {
         display: block;
         margin-bottom: 6px;
-        color: #374151;
+        color: var(--gcal-text-muted);
         font-weight: 500;
-        font-size: 14px;
+        font-size: 13px;
     }
 
     .form-group input,
-    .form-group textarea,
-    .form-group select {
+    .form-group textarea {
         width: 100%;
         padding: 10px 12px;
-        border: 1px solid #d1d5db;
+        border: 1px solid var(--gcal-outline);
         border-radius: 8px;
-        font-size: 14px;font-family: inherit;
-        color: inherit;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        color: inherit;
-        background-color: white;
+        font-size: 14px;
+        font-family: inherit;
+        color: var(--gcal-text);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        background-color: var(--gcal-surface);
     }
 
     .form-group textarea {
-        overflow-y: scroll;
+        overflow-y: auto;
+        resize: vertical;
     }
 
     .form-group input:focus,
-    .form-group textarea:focus,
-    .form-group select:focus {
+    .form-group textarea:focus {
         outline: none;
-        border-color: #9f86ff;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        border-color: var(--gcal-primary);
+        box-shadow: 0 0 0 3px var(--gcal-primary-tint-2);
+    }
+
+    .swatch-row {
+        display: flex;
+        gap: 10px;
+        padding-top: 2px;
+    }
+
+    .color-swatch {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: none;
+        background: var(--swatch-color);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.12s ease, box-shadow 0.12s ease;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .color-swatch svg {
+        opacity: 0;
+        transition: opacity 0.1s ease;
+    }
+
+    .color-swatch:hover {
+        transform: scale(1.1);
+    }
+
+    .color-swatch.selected {
+        box-shadow: 0 0 0 2px var(--gcal-surface), 0 0 0 4px var(--swatch-color);
+    }
+
+    .color-swatch.selected svg {
+        opacity: 1;
+    }
+
+    .color-swatch:focus-visible {
+        outline: 2px solid var(--gcal-primary);
+        outline-offset: 3px;
     }
 
     .modal-actions {
@@ -1270,103 +1751,6 @@
         justify-content: center;
     }
 
-    @media (width < 54rem) {
-        .container {
-            padding: 10px;
-        }
-
-        .header {
-            margin-top: 45px;
-            align-items: flex-start;
-        }
-
-        .header-controls {
-            width: 100%;
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .view-switcher {
-            width: 100%;
-            justify-content: stretch;
-        }
-
-        .btn-view {
-            flex: 1;
-        }
-
-        .date-navigation {
-            width: 100%;
-            justify-content: space-between;
-        }
-
-        .header,
-        .controls {
-            padding: 15px 20px;
-        }
-
-        .controls {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .controls .btn {
-            width: 100%;
-            justify-content: center;
-        }
-
-        .time-grid.week-view {
-            display: flex;
-            height: 1500px;
-        }
-
-        :global(.time-labels.week-labels) {
-            width: 60px;
-            min-width: 60px;
-        }
-
-        :global(.month-day-cell) {
-            min-height: 60px;
-        }
-
-        .modal-content {
-            padding: 20px;
-            width: 95%;
-        }
-
-        :global(.month-event) {
-            width: 12px;
-            height: 12px;
-            min-width: 12px;
-            min-height: 12px;
-            padding: 0;
-            border-radius: 999px;
-            flex: 0 0 12px;
-            text-indent: -9999px;
-            border-left: 100px;
-        }
-
-        :global(.event-blue.month-event) {
-        background-color: #1e40af;
-    }
-
-        :global(.event-green) {
-            background-color: #065f46;
-        }
-
-        :global(.event-purple) {
-            background-color: #6b21a8;
-        }
-
-        :global(.event-orange) {
-            background-color: #c2410c;
-        }
-
-        :global(.event-red) {
-            background-color: #b91c1c;
-        }
-    }
-
     .detail-modal-content {
         max-width: 400px;
     }
@@ -1375,12 +1759,13 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        margin-bottom: 16px;
+        gap: 12px;
     }
 
     .modal-header h3 {
         margin: 0;
-        color: #0f172a;
+        color: var(--gcal-text);
         font-size: 20px;
         font-weight: 600;
     }
@@ -1388,22 +1773,24 @@
     .btn-close {
         background: transparent;
         border: none;
-        font-size: 28px;
-        color: #64748b;
+        font-size: 24px;
+        line-height: 1;
+        color: var(--gcal-text-muted);
         cursor: pointer;
         padding: 0;
         width: 32px;
         height: 32px;
+        flex-shrink: 0;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 4px;
-        transition: all 0.2s ease;
+        border-radius: 50%;
+        transition: all 0.15s ease;
     }
 
     .btn-close:hover {
-        background: #f1f5f9;
-        color: #0f172a;
+        background: var(--gcal-surface-muted);
+        color: var(--gcal-text);
     }
 
     .detail-body {
@@ -1414,21 +1801,36 @@
         display: flex;
         align-items: flex-start;
         gap: 12px;
-        padding: 12px 0;
-        border-bottom: 1px solid #e2e8f0;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--gcal-outline-soft);
     }
 
     .detail-row strong {
-        color: #374151;
+        color: var(--gcal-text-muted);
         font-weight: 600;
-        font-size: 14px;
+        font-size: 13px;
         margin-right: 20px;
+        flex-shrink: 0;
     }
 
     .detail-row span {
-        color: #64748b;
+        color: var(--gcal-text);
         font-size: 14px;
         flex: 1;
+    }
+
+    .detail-color {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .detail-color-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--swatch-color);
+        flex-shrink: 0;
     }
 
     .detail-section {
@@ -1439,15 +1841,15 @@
 
     .detail-section strong {
         display: block;
-        color: #374151;
+        color: var(--gcal-text-muted);
         font-weight: 600;
         margin-bottom: 8px;
-        font-size: 14px;
+        font-size: 13px;
     }
 
     .detail-section p {
         margin: 0;
-        color: #64748b;
+        color: var(--gcal-text);
         line-height: 1.6;
         font-size: 14px;
         word-wrap: break-word;
@@ -1455,25 +1857,72 @@
         white-space: pre-wrap;
     }
 
-    .modal-actions {
-        display: flex;
-        gap: 12px;
-        justify-content: flex-end;
-    }
+    @media (width < 54rem) {
+        .container {
+            padding: 10px;
+        }
 
-    .modal-actions .btn {
-        min-width: 100px;
-        justify-content: center;
-    }
+        .highlights {
+            grid-template-columns: 1fr;
+        }
 
-    :global(.event-title) {
-        font-weight: 600;
-        font-size: 11px;
-    }
+        .toolbar {
+            margin-top: 45px;
+            flex-direction: column;
+            align-items: stretch;
+            border-radius: 16px;
+        }
 
-    :global(.event-time) {
-        font-size: 10px;
-        opacity: 0.9;
-        margin-top: 2px;
+        .toolbar-brand {
+            margin-right: 0;
+        }
+
+        .toolbar-nav {
+            justify-content: space-between;
+        }
+
+        .toolbar-actions {
+            margin-left: 0;
+            justify-content: space-between;
+        }
+
+        .view-switcher {
+            flex: 1;
+        }
+
+        .btn-view {
+            flex: 1;
+        }
+
+        .time-grid.week-view {
+            display: flex;
+            height: 1500px;
+        }
+
+        :global(.time-labels.week-labels) {
+            width: 52px;
+            min-width: 52px;
+        }
+
+        :global(.month-day-cell) {
+            min-height: 60px;
+        }
+
+        .modal-content {
+            padding: 20px;
+            width: 95%;
+            border-radius: 20px;
+        }
+
+        :global(.month-event) {
+            width: 6px;
+            height: 6px;
+            min-width: 6px;
+            min-height: 6px;
+            padding: 0;
+            border-radius: 999px;
+            flex: 0 0 6px;
+            text-indent: -9999px;
+        }
     }
 </style>
