@@ -14,6 +14,7 @@
         endTime: string;
         color: string;
         pin?: string;
+        featured?: boolean;
     }
     
     interface User {
@@ -39,6 +40,7 @@
     let eventStart: HTMLInputElement | undefined = $state(undefined);
     let eventEnd: HTMLInputElement | undefined = $state(undefined);
     let eventDescription: HTMLTextAreaElement | undefined = $state(undefined);
+    let isFeatured = $state(false);
     let calendarContainer: HTMLDivElement | undefined = $state(undefined);
     let prevBtn: HTMLButtonElement | undefined = $state(undefined);
     let nextBtn: HTMLButtonElement | undefined = $state(undefined);
@@ -69,13 +71,14 @@
         return EVENT_COLORS.find(c => c.key === key) ?? EVENT_COLORS[0];
     }
 
-    const FEATURED_EVENT = {
-        title: 'GeauxHack 2026',
-        dateLabel: 'Saturday, October 23',
-        description: 'Coming soon',
-        ctaLabel: 'Reserve your spot',
-        ctaLink: '#',
-    };
+    let featuredEvent = $derived.by(() => {
+        const todayStr = formatDate(new Date());
+        const upcomingFeatured = events
+            .filter(e => e.featured && e.date >= todayStr)
+            .sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime));
+        
+        return upcomingFeatured.length > 0 ? upcomingFeatured[0] : null;
+    });
 
     let upcomingEvents = $derived.by(() => {
         const todayStr = formatDate(new Date());
@@ -334,6 +337,7 @@
                 if (eventStart) eventStart.value = event.startTime;
                 if (eventEnd) eventEnd.value = event.endTime;
                 if (eventDescription) eventDescription.value = event.description || '';
+                isFeatured = event.featured || false;
                 formColor = event.color;
                 editingEventId = event.id;
             } else {
@@ -343,6 +347,7 @@
                 if (eventStart) eventStart.value = hour ? `${hour.toString().padStart(2, '0')}:00` : `09:00`
                 if (eventEnd) eventEnd.value = hour ? `${(hour+1).toString().padStart(2, '0')}:00` : `10:00`
                 if (eventDescription) eventDescription.value = '';
+                isFeatured = false;
                 formColor = 'blue';
                 editingEventId = null;
             }
@@ -378,6 +383,7 @@
         const startTime = eventStart?.value || '';
         const endTime = eventEnd?.value || '';
         const color = formColor || 'blue';
+        const featured = isFeatured;
 
         if (!title || !date || !startTime || !endTime) {
             alert('Please fill in all required fields.')
@@ -397,7 +403,8 @@
             startTime,
             endTime,
             color,
-            pin: editingEventId ? (events.find(e => e.id === editingEventId)?.pin) : generateEventPin()
+            pin: editingEventId ? (events.find(e => e.id === editingEventId)?.pin) : generateEventPin(),
+            featured
         }
 
         try {
@@ -597,7 +604,8 @@
                     startTime: data.startTime,
                     endTime: data.endTime,
                     color: data.color,
-                    pin: data.pin
+                    pin: data.pin,
+                    featured: data.featured || false 
                 };
             }) as Event[];
         } catch (error) {
@@ -652,14 +660,17 @@
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 6.9L12 17.3 5.7 20.8l1.7-6.9L2 9.2l7.1-.6L12 2z"/></svg>
                 Featured
             </span>
-            <h2 class="featured-title">{FEATURED_EVENT.title}</h2>
-            <p class="featured-meta">{FEATURED_EVENT.dateLabel}</p>
-            <p class="featured-desc">{FEATURED_EVENT.description}</p>
-            {#if FEATURED_EVENT.ctaLabel}
-                <a class="featured-cta" href={FEATURED_EVENT.ctaLink} target="_blank" rel="noopener noreferrer">
-                    {FEATURED_EVENT.ctaLabel}
+            {#if featuredEvent}
+                <h2 class="featured-title">{featuredEvent.title}</h2>
+                <p class="featured-meta">{parseDateOnly(featuredEvent.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+                <p class="featured-desc">{featuredEvent.description || 'Join us for this upcoming event!'}</p>
+                <button type="button" class="featured-cta" onclick={() => openDetailModal(featuredEvent)} style="border:none; cursor:pointer; font-family:inherit;">
+                    View details
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-                </a>
+                </button>
+            {:else}
+                <h2 class="featured-title">No Featured Events</h2>
+                <p class="featured-desc">Check back later for major upcoming events.</p>
             {/if}
         </div>
     </div>
@@ -743,11 +754,11 @@
                     <span>{formatTimeWithAmPm(selectedEvent.startTime)} – {formatTimeWithAmPm(selectedEvent.endTime)}</span>
                 </div>
                 <div class="detail-row">
-                    <strong>Color:</strong>
-                    <span class="detail-color">
-                        <span class="detail-color-dot" style="--swatch-color: {getColorMeta(selectedEvent.color).hex}"></span>
-                        {getColorMeta(selectedEvent.color).label}
-                    </span>
+                    <div class="color-value">
+                        <span class="detail-label">Color:</span>
+                        <div class="color-dot" style="background-color: {getColorMeta(selectedEvent.color).hex};"></div> 
+                        <span>{getColorMeta(selectedEvent.color).label}</span>
+                    </div>
                 </div>
                 {#if selectedEvent.description}
                     <div class="detail-section">
@@ -792,6 +803,16 @@
             <div class="form-group">
                 <label for="eventDescription">Description</label>
                 <textarea id="eventDescription" placeholder="Enter event description (optional)" bind:this={eventDescription} rows="4" onwheel={handleTextareaWheel}></textarea>
+            </div>
+
+            <div class="form-group checkbox-group">
+                <input 
+                    type="checkbox" 
+                    id="eventFeatured" 
+                    bind:checked={isFeatured}
+                    style="appearance: auto; -webkit-appearance: checkbox;"
+                >
+                <label for="eventFeatured">Mark as featured event</label>
             </div>
 
             <div class="form-group">
@@ -1819,20 +1840,6 @@
         flex: 1;
     }
 
-    .detail-color {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .detail-color-dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: var(--swatch-color);
-        flex-shrink: 0;
-    }
-
     .detail-section {
         margin-top: 16px;
         padding-top: 0;
@@ -1924,5 +1931,36 @@
             flex: 0 0 6px;
             text-indent: -9999px;
         }
+    }
+
+    .form-group.checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .form-group.checkbox-group label {
+        margin-bottom: 0;
+        cursor: pointer;
+    }
+
+    .form-group.checkbox-group input {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        margin: 0;
+    }
+    .color-value {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .color-dot {
+        width: 16px; 
+        height: 16px;
+        border-radius: 50%; 
+        flex-shrink: 0;
+        display: block;
+        margin-left: 20px;
     }
 </style>
