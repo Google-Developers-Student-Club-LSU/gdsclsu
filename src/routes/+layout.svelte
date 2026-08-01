@@ -5,8 +5,9 @@
     import Footer from "$lib/components/Footer.svelte";
     import gdscLogo from "$lib/assets/GDSC.png";
     import type { LayoutData } from './$types';
-    import { onMount, onDestroy } from 'svelte';
-	import { MediaQuery } from 'svelte/reactivity';
+    import { onMount, onDestroy, tick } from 'svelte';
+    import { afterNavigate } from '$app/navigation';
+    import { MediaQuery } from 'svelte/reactivity';
     import { getAuthInstance } from '$lib/firebase/auth';
     import Lenis from 'lenis';
     import Snap from 'lenis/snap';
@@ -16,25 +17,42 @@
     let showIntro = $state(false);
     let contentReady = $state(false);
     let lenis: Lenis | undefined = $state(undefined);
+    let snap: Snap | undefined = $state(undefined);
+
+    let unsubscribeSnapElements: (() => void)[] = [];
 
     let mq = new MediaQuery('width < 54rem')
+
+    function refreshSnapPoints() {
+        if (!snap) return;
+
+        unsubscribeSnapElements.forEach((unsubscribe) => unsubscribe());
+        unsubscribeSnapElements = [];
+
+        const sections = document.querySelectorAll<HTMLElement>('main > section');
+        sections.forEach((el) => {
+            const unsubscribe = snap!.addElement(el, { align: ['start'] });
+            unsubscribeSnapElements.push(unsubscribe);
+        });
+    }
 
     onMount(() => {
         lenis = new Lenis({
             duration: 1.2,
-            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // standard easing
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
             orientation: 'vertical',
             gestureOrientation: 'vertical',
             smoothWheel: true,
         });
 
-        const snap = new Snap(lenis, {
+        snap = new Snap(lenis, {
             type: 'mandatory',
             duration: 1.1,
             easing: (t: number) => 1 - Math.pow(1 - t, 3),
             velocityThreshold: 0.6
         });
-        snap.addElements(document.querySelectorAll('main > section'), { align: ['start'] });
+
+        refreshSnapPoints();
 
         (window as Window & { __lenis?: Lenis }).__lenis = lenis;
 
@@ -48,25 +66,28 @@
         getAuthInstance();
 
         const hasSeenIntro = sessionStorage.getItem("gdsc_intro_played");
-        
+
         if (!hasSeenIntro) {
             showIntro = true;
             sessionStorage.setItem("gdsc_intro_played", "true");
 
-            setTimeout(() => {
-                showIntro = false;
-            }, 2800);
-
-            setTimeout(() => {
-                contentReady = true;
-            }, 2200);
+            setTimeout(() => { showIntro = false; }, 2800);
+            setTimeout(() => { contentReady = true; }, 2200);
         } else {
             contentReady = true;
         }
 
         onDestroy(() => {
+            unsubscribeSnapElements.forEach((unsubscribe) => unsubscribe());
+            snap?.destroy();
             lenis?.destroy();
         });
+    });
+
+    afterNavigate(async () => {
+        await tick(); 
+        lenis?.scrollTo(0, { immediate: true });
+        refreshSnapPoints();
     });
 </script>
 
