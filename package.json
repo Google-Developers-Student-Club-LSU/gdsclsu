@@ -30,6 +30,7 @@
 		"firebase": "^12.8.0",
 		"firebase-admin": "^13.6.0",
 		"gsap": "^3.14.2",
+		"lenis": "^1.3.25",
 		"svelte-material-ui": "^8.0.3",
 		"svelte-typewrite": "^3.0.0",
 		"svelte-typewriter": "^3.2.3"

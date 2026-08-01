@@ -5,16 +5,17 @@
     import Footer from "$lib/components/Footer.svelte";
     import gdscLogo from "$lib/assets/GDSC.png";
     import type { LayoutData } from './$types';
-    import { onMount } from 'svelte';
+    import { onMount, onDestroy } from 'svelte';
 	import { MediaQuery } from 'svelte/reactivity';
     import { getAuthInstance } from '$lib/firebase/auth';
-    import Lenis from '@studio-freight/lenis';
+    import Lenis from 'lenis';
+    import Snap from 'lenis/snap';
 
     let { children, data }: { children: any; data: LayoutData } = $props();
 
     let showIntro = $state(false);
     let contentReady = $state(false);
-    let lenis: Lenis | null = null;
+    let lenis: Lenis | undefined = $state(undefined);
 
     let mq = new MediaQuery('width < 54rem')
 
@@ -26,6 +27,14 @@
             gestureOrientation: 'vertical',
             smoothWheel: true,
         });
+
+        const snap = new Snap(lenis, {
+            type: 'mandatory',
+            duration: 1.1,
+            easing: (t: number) => 1 - Math.pow(1 - t, 3),
+            velocityThreshold: 0.6
+        });
+        snap.addElements(document.querySelectorAll('main > section'), { align: ['start'] });
 
         (window as Window & { __lenis?: Lenis }).__lenis = lenis;
 
@@ -54,6 +63,10 @@
         } else {
             contentReady = true;
         }
+
+        onDestroy(() => {
+            lenis?.destroy();
+        });
     });
 </script>
 
