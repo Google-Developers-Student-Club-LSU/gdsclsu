@@ -15,6 +15,7 @@
         color: string;
         pin?: string;
         featured?: boolean;
+        rsvpLink?: string;
     }
     
     interface User {
@@ -40,6 +41,7 @@
     let eventStart: HTMLInputElement | undefined = $state(undefined);
     let eventEnd: HTMLInputElement | undefined = $state(undefined);
     let eventDescription: HTMLTextAreaElement | undefined = $state(undefined);
+    let eventRsvpLink: HTMLInputElement | undefined = $state(undefined);
     let isFeatured = $state(false);
     let calendarContainer: HTMLDivElement | undefined = $state(undefined);
     let prevBtn: HTMLButtonElement | undefined = $state(undefined);
@@ -70,6 +72,9 @@
     function getColorMeta(key: string) {
         return EVENT_COLORS.find(c => c.key === key) ?? EVENT_COLORS[0];
     }
+
+    // Update this to your chapter's official GDG community page.
+    const GDG_PAGE_URL = 'https://gdg.community.dev/';
 
     let featuredEvent = $derived.by(() => {
         const todayStr = formatDate(new Date());
@@ -337,6 +342,7 @@
                 if (eventStart) eventStart.value = event.startTime;
                 if (eventEnd) eventEnd.value = event.endTime;
                 if (eventDescription) eventDescription.value = event.description || '';
+                if (eventRsvpLink) eventRsvpLink.value = event.rsvpLink || '';
                 isFeatured = event.featured || false;
                 formColor = event.color;
                 editingEventId = event.id;
@@ -347,6 +353,7 @@
                 if (eventStart) eventStart.value = hour ? `${hour.toString().padStart(2, '0')}:00` : `09:00`
                 if (eventEnd) eventEnd.value = hour ? `${(hour+1).toString().padStart(2, '0')}:00` : `10:00`
                 if (eventDescription) eventDescription.value = '';
+                if (eventRsvpLink) eventRsvpLink.value = '';
                 isFeatured = false;
                 formColor = 'blue';
                 editingEventId = null;
@@ -384,6 +391,7 @@
         const endTime = eventEnd?.value || '';
         const color = formColor || 'blue';
         const featured = isFeatured;
+        const rsvpLink = eventRsvpLink?.value.trim() || undefined;
 
         if (!title || !date || !startTime || !endTime) {
             alert('Please fill in all required fields.')
@@ -404,7 +412,8 @@
             endTime,
             color,
             pin: editingEventId ? (events.find(e => e.id === editingEventId)?.pin) : generateEventPin(),
-            featured
+            featured,
+            rsvpLink
         }
 
         try {
@@ -605,7 +614,8 @@
                     endTime: data.endTime,
                     color: data.color,
                     pin: data.pin,
-                    featured: data.featured || false 
+                    featured: data.featured || false,
+                    rsvpLink: data.rsvpLink
                 };
             }) as Event[];
         } catch (error) {
@@ -638,7 +648,7 @@
             {:else}
                 <ul class="upcoming-list">
                     {#each upcomingEvents as ev (ev.id)}
-                        <li>
+                        <li class="upcoming-row">
                             <button type="button" class="upcoming-item" style="--swatch-color: {getColorMeta(ev.color).hex}" onclick={() => openDetailModal(ev)}>
                                 <span class="upcoming-date-chip">
                                     <span class="upcoming-date-month">{parseDateOnly(ev.date).toLocaleDateString('en-US', { month: 'short' })}</span>
@@ -649,6 +659,11 @@
                                     <span class="upcoming-time">{formatTimeWithAmPm(ev.startTime)} – {formatTimeWithAmPm(ev.endTime)}</span>
                                 </span>
                             </button>
+                            {#if ev.rsvpLink}
+                                <a class="upcoming-rsvp-btn" href={ev.rsvpLink} target="_blank" rel="noopener noreferrer" aria-label="RSVP for {ev.title}">
+                                    RSVP
+                                </a>
+                            {/if}
                         </li>
                     {/each}
                 </ul>
@@ -664,10 +679,17 @@
                 <h2 class="featured-title">{featuredEvent.title}</h2>
                 <p class="featured-meta">{parseDateOnly(featuredEvent.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
                 <p class="featured-desc">{featuredEvent.description || 'Join us for this upcoming event!'}</p>
-                <button type="button" class="featured-cta" onclick={() => openDetailModal(featuredEvent)} style="border:none; cursor:pointer; font-family:inherit;">
-                    View details
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-                </button>
+                <div class="featured-actions">
+                    <button type="button" class="featured-cta featured-cta-secondary" onclick={() => openDetailModal(featuredEvent)}>
+                        View details
+                    </button>
+                    {#if featuredEvent.rsvpLink}
+                        <a class="featured-cta" href={featuredEvent.rsvpLink} target="_blank" rel="noopener noreferrer">
+                            RSVP
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                        </a>
+                    {/if}
+                </div>
             {:else}
                 <h2 class="featured-title">No Featured Events</h2>
                 <p class="featured-desc">Check back later for major upcoming events.</p>
@@ -690,6 +712,10 @@
                 <h1>GDG Event Calendar</h1>
                 <div class="date-display" id="dateDisplay">{dateDisplay}</div>
             </div>
+            <a class="gdg-page-link" href={GDG_PAGE_URL} target="_blank" rel="noopener noreferrer">
+                GDG Page
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>
+            </a>
         </div>
 
         <div class="toolbar-nav">
@@ -768,6 +794,9 @@
                 {/if}
             </div>
             <div class="modal-actions">
+            {#if selectedEvent.rsvpLink}
+                <a class="btn btn-primary" href={selectedEvent.rsvpLink} target="_blank" rel="noopener noreferrer">RSVP</a>
+            {/if}
             {#if authState.isOfficer}<button type="button" class="btn btn-primary" onclick={() => selectedEvent && openEventModal(null, selectedEvent)}>Edit</button>
                 <button type="button" class="btn btn-delete" onclick={() => selectedEvent && handleDelete(selectedEvent)}>Delete</button>
             {/if}
@@ -803,6 +832,11 @@
             <div class="form-group">
                 <label for="eventDescription">Description</label>
                 <textarea id="eventDescription" placeholder="Enter event description (optional)" bind:this={eventDescription} rows="4" onwheel={handleTextareaWheel}></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="eventRsvpLink">RSVP Link</label>
+                <input type="url" id="eventRsvpLink" placeholder="https://gdg.community.dev/e/... (optional)" bind:this={eventRsvpLink}>
             </div>
 
             <div class="form-group checkbox-group">
@@ -928,8 +962,15 @@
         gap: 4px;
     }
 
+    .upcoming-row {
+        display: flex;
+        align-items: stretch;
+        gap: 6px;
+    }
+
     .upcoming-item {
-        width: 100%;
+        flex: 1;
+        min-width: 0;
         display: flex;
         align-items: center;
         gap: 14px;
@@ -948,6 +989,32 @@
     }
 
     .upcoming-item:focus-visible {
+        outline: 2px solid var(--gcal-primary);
+        outline-offset: 2px;
+    }
+
+    .upcoming-rsvp-btn {
+        flex-shrink: 0;
+        align-self: center;
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 14px;
+        margin-right: 4px;
+        border-radius: 999px;
+        background: var(--gcal-primary);
+        color: white;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: filter 0.15s ease;
+    }
+
+    .upcoming-rsvp-btn:hover {
+        filter: brightness(1.08);
+    }
+
+    .upcoming-rsvp-btn:focus-visible {
         outline: 2px solid var(--gcal-primary);
         outline-offset: 2px;
     }
@@ -1046,6 +1113,12 @@
         flex-grow: 1;
     }
 
+    .featured-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
     .featured-cta {
         align-self: flex-start;
         display: inline-flex;
@@ -1058,8 +1131,18 @@
         text-decoration: none;
         padding: 9px 16px;
         border-radius: 999px;
+        border: none;
+        cursor: pointer;
+        font-family: inherit;
         box-shadow: var(--gcal-shadow-1);
         transition: box-shadow 0.15s ease, transform 0.1s ease;
+    }
+
+    .featured-cta-secondary {
+        background: transparent;
+        color: var(--gcal-primary);
+        border: 1px solid var(--gcal-primary-tint-3);
+        box-shadow: none;
     }
 
     .featured-cta:hover {
@@ -1072,7 +1155,30 @@
         outline-offset: 2px;
     }
 
-    /* ---------- Toolbar ---------- */
+    .gdg-page-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 14px;
+        border-radius: 999px;
+        border: 1px solid var(--gcal-outline);
+        color: var(--gcal-text-muted);
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .gdg-page-link:hover {
+        background: var(--gcal-surface-muted);
+        color: var(--gcal-text);
+    }
+
+    .gdg-page-link:focus-visible {
+        outline: 2px solid var(--gcal-primary);
+        outline-offset: 2px;
+    }
 
     .toolbar {
         background: var(--gcal-surface);
@@ -1090,6 +1196,7 @@
         display: flex;
         align-items: center;
         gap: 12px;
+        flex-wrap: wrap;
         margin-right: auto;
     }
 
