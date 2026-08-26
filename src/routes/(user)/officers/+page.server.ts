@@ -53,6 +53,13 @@ export const load: PageServerLoad = async () => {
       linkedin: 'https://www.linkedin.com/in/dina-taing/'
     },
     {
+      name: 'Hudson Vu',
+      position: 'Senior Advisor',
+      description: `Hi, I'm Hudson Vu, a Senior Advisor for GDSC. A seasoned frontend builder and open-source contributor dedicated to empowering student developers through mentorship, community workshops, and collaborative tech projects.`,
+      github: 'https://github.com/hudzum',
+      linkedin: 'https://www.linkedin.com/in/hudson-vu-855214203/'
+    },
+    {
       name: 'William Bradford',
       position: 'Junior Webmaster',
       description: `Hey! I'm William Bradford, the Junior Webmaster for GDSC. I help work on the club's website and technical projects alongside the webmaster while continuing to develop my skills in programming and web development. I'm interested in computer science and enjoy building things with code, learning new technologies, and contributing to projects that help the club grow.`,
