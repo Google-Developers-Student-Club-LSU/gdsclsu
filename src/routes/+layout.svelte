@@ -13,7 +13,7 @@
   import Lenis from "lenis";
   import Snap from "lenis/snap";
 
-  let { children, data }: { children: any; data: LayoutData } = $props();
+  let { children }: { children: any; data: LayoutData } = $props();
 
   let showIntro = $state(false);
   let contentReady = $state(false);
@@ -134,8 +134,8 @@
 <div
   class="relative z-10 min-h-dvh flex flex-col justify-between items-center bg-transparent"
 >
-  <div class="w-full flex flex-col flex-grow">
-    <main class="w-full flex-grow">
+  <div class="w-full flex flex-col grow">
+    <main class="w-full grow">
       {@render children()}
     </main>
   </div>

@@ -12,16 +12,16 @@ interface FirebaseConfig {
   messagingSenderId: string;
 }
 
-import { 
-  PUBLIC_API_KEY, 
+import {
+  PUBLIC_API_KEY,
   PUBLIC_AUTH_DOMAIN,
   PUBLIC_PROJECT_ID,
   PUBLIC_STORAGE_BUCKET,
   PUBLIC_MESSAGING_SENDER_ID,
   PUBLIC_APP_ID,
   PUBLIC_MEASUREMENT_ID,
-  PUBLIC_DATABASE_URL
-} from '$env/static/public';
+  PUBLIC_DATABASE_URL,
+} from "$env/static/public";
 
 function getFirebaseConfig(): FirebaseConfig | null {
   const values = [
@@ -30,7 +30,7 @@ function getFirebaseConfig(): FirebaseConfig | null {
     PUBLIC_PROJECT_ID,
     PUBLIC_STORAGE_BUCKET,
     PUBLIC_MESSAGING_SENDER_ID,
-    PUBLIC_APP_ID
+    PUBLIC_APP_ID,
   ];
 
   if (values.some((value) => !value)) {
@@ -45,7 +45,7 @@ function getFirebaseConfig(): FirebaseConfig | null {
     storageBucket: PUBLIC_STORAGE_BUCKET,
     appId: PUBLIC_APP_ID,
     measurementId: PUBLIC_MEASUREMENT_ID,
-    messagingSenderId: PUBLIC_MESSAGING_SENDER_ID
+    messagingSenderId: PUBLIC_MESSAGING_SENDER_ID,
   };
 }
 
@@ -60,7 +60,9 @@ export function getFirebaseApp(): FirebaseApp | null {
 
   const config = getFirebaseConfig();
   if (!config) {
-    console.error('FIREBASE INIT SKIPPED: Invalid configuration. Check your environment variables.');
+    console.error(
+      "FIREBASE INIT SKIPPED: Invalid configuration. Check your environment variables.",
+    );
     return null;
   }
 
@@ -68,7 +70,7 @@ export function getFirebaseApp(): FirebaseApp | null {
     firebaseApp = initializeApp(config);
     return firebaseApp;
   } catch (error) {
-    console.error('FIREBASE INIT ERROR:', error);
+    console.error("FIREBASE INIT ERROR:", error);
     return null;
   }
 }

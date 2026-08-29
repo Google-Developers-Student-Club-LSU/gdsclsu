@@ -21,7 +21,7 @@
 
 <div class="fixed inset-0 flex flex-col items-center justify-center z-10 px-4 pointer-events-none">
   <div class="flex flex-col items-center gap-4 text-center pointer-events-auto">
-    <h1 class="text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-[#c6b8ff] to-[#9f86ff]">
+    <h1 class="text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-linear-to-r from-white via-[#c6b8ff] to-primary-color">
       {$page.status}
     </h1>
     <div class="text-2xl md:text-4xl font-bold text-slate-800 dark:text-white h-12">

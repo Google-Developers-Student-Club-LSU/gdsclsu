@@ -6,15 +6,15 @@ A modern web platform built for the Google Developer Student Club (GDSC) communi
 
 # Table of Contents
 
-* [Overview](#overview)
-* [Tech Stack](#tech-stack)
-* [Project Structure](#project-structure)
-* [Installation](#installation)
-* [Environment Variables](#environment-variables)
-* [Development](#development)
-* [Build & Production](#build--production)
-* [Contributors](#contributors)
-* [License](#license)
+- [Overview](#overview)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Installation](#installation)
+- [Environment Variables](#environment-variables)
+- [Development](#development)
+- [Build & Production](#build--production)
+- [Contributors](#contributors)
+- [License](#license)
 
 ---
 
@@ -22,11 +22,11 @@ A modern web platform built for the Google Developer Student Club (GDSC) communi
 
 The GDSC Chapter Website functions as a central hub for the student developer community. It enables members to:
 
-* Discover upcoming events
-* Track engagement rankings via live leaderboards
-* Explore organizational goals and initiatives
-* View leadership and officer profiles
-* Access sponsor and partnership resources
+- Discover upcoming events
+- Track engagement rankings via live leaderboards
+- Explore organizational goals and initiatives
+- View leadership and officer profiles
+- Access sponsor and partnership resources
 
 ---
 

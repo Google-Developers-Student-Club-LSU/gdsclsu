@@ -1,5 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap');
-@import 'tailwindcss';
+@import url("https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap");
+@import "tailwindcss";
 
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
@@ -26,8 +26,8 @@
 }
 
 @layer base {
-  :root{
-    font-family: 'Google Sans', sans-serif;
+  :root {
+    font-family: "Google Sans", sans-serif;
     font-size: 16px;
     font-style: normal;
     font-weight: 300;
@@ -37,7 +37,8 @@
     display: none;
   }
 
-  html, body {
+  html,
+  body {
     -ms-overflow-style: none;
     scrollbar-width: none;
     user-select: none;
@@ -46,80 +47,84 @@
 }
 
 @keyframes logoLeftSlide {
-    0% {
-        transform: translateX(-15vw);
-        opacity: 0;
-    }
-    30% {
-        opacity: 1;
-    }
-    70%, 100% {
-        transform: translateX(0);
-    }
+  0% {
+    transform: translateX(-15vw);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  70%,
+  100% {
+    transform: translateX(0);
+  }
 }
 
 @keyframes logoRightSlide {
-    0% {
-        transform: translateX(15vw);
-        opacity: 0;
-    }
-    30% {
-        opacity: 1;
-    }
-    70%, 100% {
-        transform: translateX(0);
-    }
+  0% {
+    transform: translateX(15vw);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  70%,
+  100% {
+    transform: translateX(0);
+  }
 }
 
 @keyframes logoDrop {
-    0%, 55% {
-        transform: translateY(0) scale(1);
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(8vh) scale(0.85);
-        opacity: 0;
-    }
+  0%,
+  55% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(8vh) scale(0.85);
+    opacity: 0;
+  }
 }
 
 @keyframes fadeOverlay {
-    0%, 75% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
-    }
+  0%,
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 @keyframes contentFadeUp {
-    0% {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-logo-left-slide {
-    animation: logoLeftSlide 1.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  animation: logoLeftSlide 1.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
 .animate-logo-right-slide {
-    animation: logoRightSlide 1.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  animation: logoRightSlide 1.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
 .animate-logo-drop {
-    animation: logoDrop 2.6s cubic-bezier(0.7, 0, 0.3, 1) forwards;
+  animation: logoDrop 2.6s cubic-bezier(0.7, 0, 0.3, 1) forwards;
 }
 
 .animate-fade-overlay {
-    animation: fadeOverlay 2.6s ease-in-out forwards;
+  animation: fadeOverlay 2.6s ease-in-out forwards;
 }
 
 .animate-content-fade-up {
-    animation: contentFadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: contentFadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes gradientFlow {

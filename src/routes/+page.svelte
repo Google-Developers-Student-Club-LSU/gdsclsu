@@ -51,7 +51,7 @@
     <div class="mainCard z-10 flex flex-col gap-4 sm:gap-5 items-center justify-center
                 min-h-[50vh] sm:h-[55vh] w-[90vw] sm:w-[85vw] max-w-5xl rounded-3xl
                 bg-white/10 dark:bg-slate-900/20 
-                backdrop-blur-[40px] 
+                backdrop-blur-2xl 
                 border border-white/20 dark:border-slate-700/30
                 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.15)]
                 relative p-6 sm:p-0">
@@ -59,12 +59,12 @@
         Welcome to
       </p>
       
-      <h1 class="text-transparent bg-clip-text bg-gradient-to-r from-white via-[#c6b8ff] to-[#9f86ff] via-white to-[#c6b8ff]
+      <h1 class="text-transparent bg-clip-text bg-linear-to-r from-white via-[#c6b8ff] to-[#c6b8ff]
                 text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight select-none
                 mx-4 sm:mx-10
                 filter drop-shadow-[0_2px_10px_rgba(15,23,42,0.15)]
                 dark:drop-shadow-[0_4px_20px_rgba(159,134,255,0.4)]
-                animate-gradient-flow bg-[length:200%_auto] text-center leading-tight">
+                animate-gradient-flow bg-size-[200%_auto] text-center leading-tight">
         GDSC <br> LSU
       </h1>
     </div>
@@ -78,7 +78,7 @@
 
       <div class="mt-10 flex flex-wrap items-center justify-center gap-3 sm:gap-6">
         {#each countdownParts as part}
-          <div class="flex flex-col items-center gap-2 rounded-xl border border-amber-500/30 bg-slate-800/80 px-4 py-3 sm:px-6 sm:py-4 min-w-[80px] sm:min-w-[110px]">
+          <div class="flex flex-col items-center gap-2 rounded-xl border border-amber-500/30 bg-slate-800/80 px-4 py-3 sm:px-6 sm:py-4 min-w-20 sm:min-w-27.5">
             <span class="font-mono-retro glow-amber text-3xl font-bold text-amber-500 sm:text-5xl">{part.value.toString().padStart(2, '0')}</span>
             <span class="font-mono-retro text-[0.65rem] uppercase tracking-[0.25em] text-[#eaddcf]/60">{part.label}</span>
           </div>
@@ -90,7 +90,7 @@
 
   <section id="join" class="flex h-dvh w-full flex-col items-center justify-center px-6 text-center md:px-10 relative z-10">
     <div use:reveal class="mx-auto max-w-3xl">
-      <span class="inline-block py-1.5 px-4 rounded-full bg-[#9f86ff]/10 text-[#9f86ff] text-sm font-bold tracking-wider uppercase mb-6 border border-[#9f86ff]/20">
+      <span class="inline-block py-1.5 px-4 rounded-full bg-primary-color/10 text-primary-color text-sm font-bold tracking-wider uppercase mb-6 border border-primary-color/20">
         Get Involved
       </span>
       <h2 class="text-5xl md:text-7xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-6">
@@ -101,7 +101,7 @@
       </p>
       
       <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <a href="/login" class="w-full sm:w-auto px-8 py-4 rounded-full bg-gradient-to-r from-[#9f86ff] to-[#3b82f6] text-white font-bold text-lg hover:scale-105 transition-transform shadow-lg shadow-[#9f86ff]/25">
+        <a href="/login" class="w-full sm:w-auto px-8 py-4 rounded-full bg-linear-to-r from-primary-color to-[#3b82f6] text-white font-bold text-lg hover:scale-105 transition-transform shadow-lg shadow-primary-color/25">
           Become a Member
         </a>
         <a href="/about" class="w-full sm:w-auto px-8 py-4 rounded-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
@@ -115,7 +115,7 @@
     <div use:reveal class="mx-auto max-w-4xl">
       <h2 class="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white mb-12 md:mb-16">Connect with us</h2>
 
-      <div class="relative mx-auto aspect-square w-full max-w-[360px] sm:max-w-[480px] md:max-w-[580px]">
+      <div class="relative mx-auto aspect-square w-full max-w-90 sm:max-w-120 md:max-w-145">
 
         <!-- svelte-ignore a11y_consider_explicit_label -->
         <a href="https://gdg.community.dev/gdg-on-campus-louisiana-state-university/" rel="noopener noreferrer"
