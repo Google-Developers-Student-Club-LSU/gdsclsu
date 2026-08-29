@@ -6,9 +6,6 @@
   import * as database from "$lib/firebase/database";
   import { collection, query, where, onSnapshot } from "firebase/firestore";
   import gsap from 'gsap';
-  import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-  gsap.registerPlugin(ScrollTrigger);
 
   let memberList = $state<Member[]>([]);
   let isLoading = $state(true);
@@ -49,11 +46,6 @@
         y: 0,
         duration: 2,
         ease: "power2.out",
-        scrollTrigger: {
-          trigger: container,
-          start: "top 80%",
-          toggleActions: "play none none none"
-        }
       });
     });
 

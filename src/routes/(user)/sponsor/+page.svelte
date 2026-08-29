@@ -1,10 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import gsap from 'gsap';
-  import { ScrollTrigger } from 'gsap/ScrollTrigger';
   import GDSCSponsorship from "$lib/assets/GDSCSponsorship.pdf";
-
-  gsap.registerPlugin(ScrollTrigger);
 
   function downloadBooklet(): void {
     const link = document.createElement('a');
@@ -30,11 +27,6 @@
         y: 0,
         duration: 1,
         ease: "power2.out",
-        scrollTrigger: {
-          trigger: container,
-          start: "top 85%",
-          toggleActions: "play none none none"
-        }
       });
     });
   });

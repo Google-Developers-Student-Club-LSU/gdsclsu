@@ -3,7 +3,6 @@
   import { createUser } from '$lib/firebase/auth';
   import { onMount } from 'svelte';
   import gsap from 'gsap';
-  import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
   let email = $state('');
   let password = $state('');
@@ -34,8 +33,6 @@
     }
   }
 
-  gsap.registerPlugin(ScrollTrigger);
-
   onMount(() => {
     const containers = document.querySelectorAll('.fade-container');
     containers.forEach((container: Element) => {
@@ -45,11 +42,6 @@
         y: 0,
         duration: 1,
         ease: "power2.out",
-        scrollTrigger: {
-          trigger: container,
-          start: "top 85%",
-          toggleActions: "play none none none"
-        }
       });
     });
   });

@@ -1,9 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import gsap from 'gsap';
-  import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-  gsap.registerPlugin(ScrollTrigger);
 
   onMount(() => {
     const containers = document.querySelectorAll('.fade-container');
@@ -16,11 +13,6 @@
         y: 0,
         duration: 1,
         ease: "power2.out",
-        scrollTrigger: {
-          trigger: container,
-          start: "top 80%",
-          toggleActions: "play none none none"
-        }
       });
     });
   });

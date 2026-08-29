@@ -3,7 +3,6 @@
   import { onMount } from 'svelte';
   import type { PageData } from './$types';
   import gsap from 'gsap';
-  import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
   let { data }: { data: PageData } = $props();
 
@@ -11,8 +10,6 @@
     const person = name.split(' ')[0]?.toLowerCase() ?? '';
     return `/${person}.webp`;
   }
-
-  gsap.registerPlugin(ScrollTrigger);
 
   onMount(() => {
     gsap.fromTo('.hero-element',
@@ -28,10 +25,6 @@
         duration: 0.8,
         stagger: 0.1,
         ease: "power3.out",
-        scrollTrigger: {
-          trigger: '.officer-grid',
-          start: "top 80%",
-        }
       }
     );
   });
