@@ -3,7 +3,12 @@ import type { User } from "../models/User";
 import { getFirebaseApp } from "./config";
 
 let databaseInstance: Firestore | null = null;
-export const db = getDatabase();
+
+export function getDatabaseInstance(): Firestore | null {
+  return getDatabase();
+}
+
+export const db = typeof window !== 'undefined' ? getDatabase() : null;
 
 function getDatabase(): Firestore | null {
   if (!databaseInstance) {
@@ -17,6 +22,7 @@ function getDatabase(): Firestore | null {
 }
 
 export async function addToFirebase (object: any, table: string) {
+  const db = getDatabase();
   if (!db) {
     console.error("Firebase Database is not available. Check your environment variables.");
     return;
@@ -26,6 +32,8 @@ export async function addToFirebase (object: any, table: string) {
 }
 
 export async function createNewUserDoc(user: User): Promise<void> {
+  const db = getDatabase();
+  if (!db) return;
   try {
     const docRef = doc(db, 'users', user.id);
     await setDoc(docRef, user);
@@ -35,6 +43,7 @@ export async function createNewUserDoc(user: User): Promise<void> {
 }
 
 export async function deleteFromFirebase (docId: string, table: string) {
+  const db = getDatabase();
   if (!db) {
     console.error("Firebase Database is not available. Check your environment variables.");
     return;
@@ -44,6 +53,7 @@ export async function deleteFromFirebase (docId: string, table: string) {
 }
 
 export async function updateDocInFirebase (docId: string, table: string, updates: any) {
+  const db = getDatabase();
   if (!db) {
     console.error("Firebase Database is not available. Check your environment variables.");
     return;
@@ -54,6 +64,7 @@ export async function updateDocInFirebase (docId: string, table: string, updates
 }
 
 export async function getAllDocsFromFirebase (table: string) {
+  const db = getDatabase();
   if (!db) {
     throw new Error("Firebase Database is not available. Check your environment variables.");
   }
@@ -62,6 +73,7 @@ export async function getAllDocsFromFirebase (table: string) {
 }
 
 export async function getDocFromFirebase (docId: string, table: string) {
+  const db = getDatabase();
   if (!db) {
     throw new Error("Firebase Database is not available. Check your environment variables.");
   }
@@ -79,6 +91,8 @@ export async function getDocFromFirebase (docId: string, table: string) {
 
 export async function getUserByUid(uid: string): Promise<any> {
     try {
+        const db = getDatabase();
+        if (!db) throw new Error("Firebase Database is not available.");
         const docRef = doc(db, "users", uid);
         const docSnap = await getDoc(docRef);
         
@@ -95,6 +109,8 @@ export async function getUserByUid(uid: string): Promise<any> {
 }
 
 export async function saveUserWithUid(user: any): Promise<void> {
+    const db = getDatabase();
+    if (!db) return;
     const docRef = doc(db, "users", user.id);
     await setDoc(docRef, user);
 }

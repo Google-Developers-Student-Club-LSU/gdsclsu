@@ -12,12 +12,13 @@ import type { User } from "../models/User";
 import * as database from "./database";
 import { getFirebaseApp } from "./config";
 import { authState } from './auth.svelte';
-import { getDatabase } from "firebase/database";
-
 let authInstance: Auth | null = null;
-const db = getDatabase();
 
 export function getAuthInstance(): Auth | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   if (!authInstance) {
     const app = getFirebaseApp();
     if (!app) {
@@ -29,7 +30,7 @@ export function getAuthInstance(): Auth | null {
   return authInstance;
 }
 
-export const auth = typeof window !== 'undefined' ? getAuthInstance() : null as any;
+export const auth: Auth | null = typeof window !== 'undefined' ? getAuthInstance() : null;
 
 export async function createUser(email: string, password: string, username?: string): Promise<FirebaseUser | null> {
   const auth = getAuthInstance();
