@@ -73,8 +73,7 @@
         return EVENT_COLORS.find(c => c.key === key) ?? EVENT_COLORS[0];
     }
 
-    // Update this to your chapter's official GDG community page.
-    const GDG_PAGE_URL = 'https://gdg.community.dev/';
+    const GDG_PAGE_URL = 'https://gdg.community.dev/gdg-on-campus-louisiana-state-university/';
 
     let featuredEvent = $derived.by(() => {
         const todayStr = formatDate(new Date());
@@ -391,7 +390,7 @@
         const endTime = eventEnd?.value || '';
         const color = formColor || 'blue';
         const featured = isFeatured;
-        const rsvpLink = eventRsvpLink?.value.trim() || undefined;
+        const rsvpLink = eventRsvpLink?.value.trim() || "";
 
         if (!title || !date || !startTime || !endTime) {
             alert('Please fill in all required fields.')
