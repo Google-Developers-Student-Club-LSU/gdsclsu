@@ -4,7 +4,7 @@
   import BlobBackground from "$lib/components/BlobBackground.svelte";
   import { reveal } from "$lib/utils/reveal";
 
-  const HACKATHON_START = new Date('2026-10-23T00:00:00-05:00');
+  const HACKATHON_START = new Date('2026-10-23T18:00:00-05:00');
   let now = $state(new Date());
 
   onMount(() => {
