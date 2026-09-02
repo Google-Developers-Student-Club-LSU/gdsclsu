@@ -4,7 +4,7 @@
   import BlobBackground from "$lib/components/BlobBackground.svelte";
   import { reveal } from "$lib/utils/reveal";
 
-  const HACKATHON_START = new Date('2026-10-22T00:00:00-05:00');
+  const HACKATHON_START = new Date('2026-10-23T00:00:00-05:00');
   let now = $state(new Date());
 
   onMount(() => {
@@ -70,22 +70,30 @@
     </div>
   </section>
 
-  <section id="countdown" class="flex h-dvh w-full flex-col items-center justify-center px-6 md:px-10 relative z-10">
-    <div use:reveal class="w-full max-w-4xl bg-slate-900 dark:bg-slate-900/80 rounded-[3rem] p-8 md:p-16 border border-white/10 shadow-2xl flex flex-col items-center text-center backdrop-blur-xl">
-      
-      <h1 class="glow-amber font-display text-5xl font-bold text-amber-500 md:text-7xl">GeauxHack '26</h1>
-      <p class="font-mono-retro mt-4 text-xs uppercase tracking-[0.3em] text-[#eaddcf]/70 md:text-sm">T-minus</p>
-
-      <div class="mt-10 flex flex-wrap items-center justify-center gap-3 sm:gap-6">
-        {#each countdownParts as part}
-          <div class="flex flex-col items-center gap-2 rounded-xl border border-amber-500/30 bg-slate-800/80 px-4 py-3 sm:px-6 sm:py-4 min-w-20 sm:min-w-27.5">
-            <span class="font-mono-retro glow-amber text-3xl font-bold text-amber-500 sm:text-5xl">{part.value.toString().padStart(2, '0')}</span>
-            <span class="font-mono-retro text-[0.65rem] uppercase tracking-[0.25em] text-[#eaddcf]/60">{part.label}</span>
+  <section id="countdown">
+    <a href="https://geauxhack.com">
+      <div class="flex h-dvh w-full flex-col items-center justify-center px-6 md:px-10 relative z-10">
+        <div use:reveal class="w-full max-w-4xl bg-[#273e47] dark:bg-[#273e47] rounded-[3rem] p-8 md:p-16 border border-white/10 shadow-2xl flex flex-col items-center text-center backdrop-blur-xl">
+          
+          <div class="font-display text-5xl font-bold md:text-7xl flex flex-wrap">
+            <pre class="text-[#d8c99b]">Geaux</pre>
+            <pre class="text-[#d8973c]">Hack</pre>
+            <pre class="text-[#a4243b]">'26</pre>
           </div>
-        {/each}
+          <p class="font-mono-retro mt-4 text-xs uppercase tracking-[0.3em] text-[#eaddcf]/70 md:text-sm">T-minus</p>
+
+          <div class="mt-10 flex flex-wrap items-center justify-center gap-3 sm:gap-6">
+            {#each countdownParts as part}
+              <div class="flex flex-col items-center gap-2 rounded-xl border border-amber-500/30 bg-[#38484e] px-4 py-3 sm:px-6 sm:py-4 min-w-[80px] sm:min-w-[110px]">
+                <span class="font-mono-retro glow-amber text-3xl font-bold text-[#d8973c] sm:text-5xl">{part.value.toString().padStart(2, '0')}</span>
+                <span class="font-mono-retro text-[0.65rem] uppercase tracking-[0.25em] text-[#eaddcf]/60">{part.label}</span>
+              </div>
+            {/each}
+          </div>
+          
+        </div>
       </div>
-      
-    </div>
+    </a>
   </section>
 
   <section id="join" class="flex h-dvh w-full flex-col items-center justify-center px-6 text-center md:px-10 relative z-10">
