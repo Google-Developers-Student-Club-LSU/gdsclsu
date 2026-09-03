@@ -1,88 +1,92 @@
 import { mkdirSync, writeFileSync } from "node:fs";
-import { cert, getApps, initializeApp, applicationDefault } from "firebase-admin/app";
+import { applicationDefault, cert, getApps, initializeApp } from "firebase-admin/app";
+import type { App } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
+import type { Auth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
-import { getVercelOidcToken } from "@vercel/oidc";
+import type { Firestore } from "firebase-admin/firestore";
 import { gcpConfig } from "./gcp.config";
 
 const WIF_DIR = "/tmp/gdsc-wif";
 const WIF_TOKEN_PATH = `${WIF_DIR}/subject-token`;
 const WIF_CONFIG_PATH = `${WIF_DIR}/credentials.json`;
 
-let wifReady = false;
+let wifConfigWritten = false;
+
+function tokenFromRequest(request?: Request): string | undefined {
+  if (request) {
+    const header = request.headers.get("x-vercel-oidc-token");
+    if (header) return header;
+  }
+  return process.env.VERCEL_OIDC_TOKEN || undefined;
+}
 
 function writeWifConfig(): boolean {
-  if (wifReady) return true;
-  const { projectNumber, workloadIdentityPoolId, workloadIdentityProviderId, serviceAccountEmail } = gcpConfig;
-  if (!process.env.VERCEL_OIDC_TOKEN || !projectNumber || !serviceAccountEmail) {
+  if (wifConfigWritten) return true;
+  const { projectNumber, workloadIdentityPoolId, workloadIdentityProviderId, serviceAccountEmail } =
+    gcpConfig;
+  if (!projectNumber || !serviceAccountEmail) return false;
+  try {
+    mkdirSync(WIF_DIR, { recursive: true });
+    writeFileSync(
+      WIF_CONFIG_PATH,
+      JSON.stringify({
+        type: "external_account",
+        audience: `//iam.googleapis.com/projects/${projectNumber}/locations/global/workloadIdentityPools/${workloadIdentityPoolId}/providers/${workloadIdentityProviderId}`,
+        subject_token_type: "urn:ietf:params:oauth:token-type:jwt",
+        token_url: "https://sts.googleapis.com/v1/token",
+        service_account_impersonation_url: `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${serviceAccountEmail}:generateAccessToken`,
+        credential_source: { file: WIF_TOKEN_PATH },
+      }),
+      "utf8",
+    );
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = WIF_CONFIG_PATH;
+    wifConfigWritten = true;
+    return true;
+  } catch {
     return false;
   }
-  mkdirSync(WIF_DIR, { recursive: true });
-  writeFileSync(WIF_TOKEN_PATH, process.env.VERCEL_OIDC_TOKEN, "utf8");
-  writeFileSync(
-    WIF_CONFIG_PATH,
-    JSON.stringify({
-      type: "external_account",
-      audience: `//iam.googleapis.com/projects/${projectNumber}/locations/global/workloadIdentityPools/${workloadIdentityPoolId}/providers/${workloadIdentityProviderId}`,
-      subject_token_type: "urn:ietf:params:oauth:token-type:jwt",
-      token_url: "https://sts.googleapis.com/v1/token",
-      service_account_impersonation_url: `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${serviceAccountEmail}:generateAccessToken`,
-      credential_source: { file: WIF_TOKEN_PATH },
-    }),
-    "utf8",
-  );
-  process.env.GOOGLE_APPLICATION_CREDENTIALS = WIF_CONFIG_PATH;
-  wifReady = true;
-  return true;
 }
 
-async function refreshWifToken(): Promise<void> {
-  if (!wifReady) return;
+function writeToken(token: string): void {
   try {
-    const token = await getVercelOidcToken();
-    if (token) {
-      writeFileSync(WIF_TOKEN_PATH, token, "utf8");
-    }
+    writeFileSync(WIF_TOKEN_PATH, token, "utf8");
   } catch {
-    const token = process.env.VERCEL_OIDC_TOKEN;
-    if (token) {
-      writeFileSync(WIF_TOKEN_PATH, token, "utf8");
-    }
+    // Non-fatal: a stale token file is only a problem on token refresh.
   }
 }
 
-function adminCredential() {
+function adminApp(token?: string): App | null {
+  const existing = getApps()[0];
+  if (existing) {
+    if (token) writeToken(token);
+    return existing;
+  }
+
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
   if (projectId && clientEmail && privateKey) {
-    return cert({ projectId, clientEmail, privateKey });
+    return initializeApp({
+      credential: cert({ projectId, clientEmail, privateKey }),
+      projectId: gcpConfig.projectId,
+    });
   }
-  if (writeWifConfig()) {
-    return applicationDefault();
+
+  if (token && writeWifConfig()) {
+    writeToken(token);
+    return initializeApp({ credential: applicationDefault(), projectId: gcpConfig.projectId });
   }
+
   return null;
 }
 
-export function getAdminApp() {
-  if (getApps().length === 0) {
-    const credential = adminCredential();
-    if (!credential) {
-      return null;
-    }
-    initializeApp({ credential, projectId: gcpConfig.projectId });
-  }
-  return getApps()[0];
+export async function getAdminDb(request?: Request): Promise<Firestore | null> {
+  const app = adminApp(tokenFromRequest(request));
+  return app ? getFirestore(app) : null;
 }
 
-export async function getAdminDb() {
-  const app = getAdminApp();
-  if (!app) return null;
-  await refreshWifToken();
-  return getFirestore(app);
-}
-
-export function getAdminAuth() {
-  const app = getAdminApp();
+export function getAdminAuth(request?: Request): Auth | null {
+  const app = adminApp(tokenFromRequest(request));
   return app ? getAuth(app) : null;
 }

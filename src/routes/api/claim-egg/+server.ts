@@ -3,8 +3,8 @@ import type { RequestHandler } from "./$types";
 import { getAdminAuth, getAdminDb } from "$lib/server/firebase";
 
 export const POST: RequestHandler = async ({ request }) => {
-  const auth = getAdminAuth();
-  const db = await getAdminDb();
+  const auth = getAdminAuth(request);
+  const db = await getAdminDb(request);
   if (!auth || !db) {
     return json({ ok: false, error: "Server auth is not configured." }, { status: 503 });
   }

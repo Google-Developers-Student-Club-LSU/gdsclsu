@@ -7,7 +7,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
   if (sessionCookie) {
     try {
-      const adminAuth = getAdminAuth();
+      const adminAuth = getAdminAuth(event.request);
       if (!adminAuth) {
         return resolve(event);
       }

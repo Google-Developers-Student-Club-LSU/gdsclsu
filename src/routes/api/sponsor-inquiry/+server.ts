@@ -10,7 +10,7 @@ function clean(value: unknown, maxLength: number): string {
 }
 
 export const POST: RequestHandler = async ({ request }) => {
-  const db = await getAdminDb();
+  const db = await getAdminDb(request);
   if (!db) {
     return json({ ok: false, error: "Server auth is not configured." }, { status: 503 });
   }

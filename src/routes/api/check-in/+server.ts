@@ -39,8 +39,8 @@ function isLiveNow(event: {
 }
 
 export const POST: RequestHandler = async ({ request }) => {
-  const auth = getAdminAuth();
-  const db = await getAdminDb();
+  const auth = getAdminAuth(request);
+  const db = await getAdminDb(request);
   if (!auth || !db) {
     return json({ ok: false, error: "Server auth is not configured." }, { status: 503 });
   }
