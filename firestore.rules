@@ -39,5 +39,9 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow write: if isSignedIn();
     }
+
+    match /sponsorInquiries/{inquiryId} {
+      allow read, write: if false;
+    }
   }
 }

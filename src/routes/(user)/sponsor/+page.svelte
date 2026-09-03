@@ -3,6 +3,10 @@
   import gsap from 'gsap';
   import GDSCSponsorship from "$lib/assets/GDSCSponsorship.pdf";
 
+  let submitting = $state(false);
+  let formError = $state('');
+  let formSuccess = $state(false);
+
   function downloadBooklet(): void {
     const link = document.createElement('a');
     link.href = GDSCSponsorship;
@@ -10,10 +14,42 @@
     link.click();
   }
 
-  function handleContactSubmit(e: SubmitEvent) {
-    // come back to this when the firebase project gets upgraded.
+  async function handleContactSubmit(e: SubmitEvent) {
     e.preventDefault();
-    alert("Thanks for reaching out! We'll be in touch soon.");
+    const form = e.currentTarget as HTMLFormElement;
+    const data = new FormData(form);
+
+    submitting = true;
+    formError = '';
+    formSuccess = false;
+
+    try {
+      const response = await fetch('/api/sponsor-inquiry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: data.get('name'),
+          company: data.get('company'),
+          email: data.get('email'),
+          message: data.get('message'),
+          website: data.get('website'),
+        }),
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.ok) {
+        formError = result.error || 'Could not send your message. Please try again.';
+        return;
+      }
+
+      form.reset();
+      formSuccess = true;
+    } catch (error) {
+      console.error('Failed to send sponsor inquiry:', error);
+      formError = 'Could not send your message. Please try again.';
+    } finally {
+      submitting = false;
+    }
   }
 
   onMount(() => {
@@ -105,26 +141,42 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="space-y-2">
             <label for="name" class="text-sm font-semibold text-slate-700 dark:text-slate-300">Full Name</label>
-            <input type="text" id="name" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 focus:ring-2 focus:ring-[#9f86ff] focus:border-transparent outline-none transition-all text-slate-800 dark:text-white">
+            <input type="text" id="name" name="name" required autocomplete="name" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 focus:ring-2 focus:ring-[#9f86ff] focus:border-transparent outline-none transition-all text-slate-800 dark:text-white">
           </div>
           <div class="space-y-2">
             <label for="company" class="text-sm font-semibold text-slate-700 dark:text-slate-300">Company</label>
-            <input type="text" id="company" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 focus:ring-2 focus:ring-[#9f86ff] focus:border-transparent outline-none transition-all text-slate-800 dark:text-white">
+            <input type="text" id="company" name="company" required autocomplete="organization" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 focus:ring-2 focus:ring-[#9f86ff] focus:border-transparent outline-none transition-all text-slate-800 dark:text-white">
           </div>
         </div>
 
         <div class="space-y-2">
           <label for="email" class="text-sm font-semibold text-slate-700 dark:text-slate-300">Email</label>
-          <input type="email" id="email" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 focus:ring-2 focus:ring-[#9f86ff] focus:border-transparent outline-none transition-all text-slate-800 dark:text-white">
+          <input type="email" id="email" name="email" required autocomplete="email" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 focus:ring-2 focus:ring-[#9f86ff] focus:border-transparent outline-none transition-all text-slate-800 dark:text-white">
         </div>
 
         <div class="space-y-2">
           <label for="message" class="text-sm font-semibold text-slate-700 dark:text-slate-300">Message</label>
-          <textarea id="message" rows="4" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 focus:ring-2 focus:ring-[#9f86ff] focus:border-transparent outline-none transition-all text-slate-800 dark:text-white resize-none"></textarea>
+          <textarea id="message" name="message" rows="4" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 focus:ring-2 focus:ring-[#9f86ff] focus:border-transparent outline-none transition-all text-slate-800 dark:text-white resize-none"></textarea>
         </div>
 
-        <button type="submit" class="w-full py-4 bg-[#9f86ff] hover:bg-[#8b6fff] text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 active:translate-y-0">
-          Send Message
+        <div class="hidden" aria-hidden="true">
+          <label for="website">Leave this field empty</label>
+          <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+        </div>
+
+        {#if formError}
+          <p class="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-medium" role="alert">
+            {formError}
+          </p>
+        {/if}
+        {#if formSuccess}
+          <p class="p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 text-sm font-medium" role="status">
+            Thanks for reaching out! Our partnership team will get back to you shortly.
+          </p>
+        {/if}
+
+        <button type="submit" disabled={submitting} class="w-full py-4 bg-[#9f86ff] hover:bg-[#8b6fff] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 active:translate-y-0">
+          {submitting ? 'Sending...' : 'Send Message'}
         </button>
       </form>
     </div>

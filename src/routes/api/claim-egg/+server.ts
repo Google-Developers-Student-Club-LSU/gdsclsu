@@ -4,7 +4,7 @@ import { getAdminAuth, getAdminDb } from "$lib/server/firebase";
 
 export const POST: RequestHandler = async ({ request }) => {
   const auth = getAdminAuth();
-  const db = getAdminDb();
+  const db = await getAdminDb();
   if (!auth || !db) {
     return json({ ok: false, error: "Server auth is not configured." }, { status: 503 });
   }
