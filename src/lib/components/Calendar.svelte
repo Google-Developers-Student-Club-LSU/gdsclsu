@@ -115,16 +115,15 @@
     let featuredEvent = $derived.by(() => {
         const todayStr = formatDate(new Date());
         const upcomingFeatured = events
-            .filter(e => e.date >= todayStr || (e.endDate && e.endDate >= todayStr))
+            .filter(e => e.featured === true && (e.date >= todayStr || (e.endDate && e.endDate >= todayStr)))
             .sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime));
-        
         return upcomingFeatured.length > 0 ? upcomingFeatured[0] : null;
     });
 
     let upcomingEvents = $derived.by(() => {
         const todayStr = formatDate(new Date());
         return events
-            .filter(e => e.date >= todayStr || (e.endDate && e.endDate >= todayStr))
+            .filter(e => e.type !== 'easter-egg' && (e.date >= todayStr || (e.endDate && e.endDate >= todayStr)))
             .sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime))
             .slice(0, 5);
     });
