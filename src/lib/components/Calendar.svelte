@@ -1,21 +1,26 @@
 <script lang="ts">
     import { onMount, tick } from "svelte";
+    import { auth } from "$lib/firebase/auth";
     import { authState } from "$lib/firebase/auth.svelte";
     import * as database from "$lib/firebase/database";
     import { collection, getDocs } from "firebase/firestore";
     
     type ViewType = 'week' | 'month';
+    type EventType = 'event' | 'task' | 'easter-egg';
     type Event = { 
         id: string;
         title: string;
         description?: string;
         date: string;
+        endDate?: string | null;
         startTime: string;
         endTime: string;
         color: string;
-        pin?: string;
         featured?: boolean;
         rsvpLink?: string;
+        type?: EventType;
+        points?: number;
+        allDay?: boolean;
     }
     
     interface User {
@@ -38,6 +43,7 @@
     let modalTitle: HTMLHeadingElement | undefined = $state(undefined);
     let eventTitle: HTMLInputElement | undefined = $state(undefined);
     let eventDate: HTMLInputElement | undefined = $state(undefined);
+    let eventEndDate: HTMLInputElement | undefined = $state(undefined);
     let eventStart: HTMLInputElement | undefined = $state(undefined);
     let eventEnd: HTMLInputElement | undefined = $state(undefined);
     let eventDescription: HTMLTextAreaElement | undefined = $state(undefined);
@@ -52,6 +58,7 @@
 
     let events: Event[] = $state([]);
     let loadingEvents: boolean = $state(true);
+    let eggClaimCounts: Record<string, number> = $state({});
     let editingEventId = $state<string | null>(null);
     let selectedEvent: Event | null = $state(null);
     let showDetailModal: boolean = $state(false);
@@ -60,6 +67,31 @@
     let currentDate: Date = $state(new Date());
     let dateDisplay = $state("");
     let formColor = $state('blue');
+    let formType: EventType = $state('event');
+    let formPoints = $state(10);
+    let claimedEggIds = $state<string[]>([]);
+    let eggCountsLoaded = $state(false);
+
+    $effect(() => {
+        claimedEggIds = authState.user?.claimedEggs ?? [];
+    });
+
+    $effect(() => {
+        if (!authState.user || !authState.isOfficer || eggCountsLoaded || !database.db) return;
+        eggCountsLoaded = true;
+        getDocs(collection(database.db, "users"))
+            .then((usersSnapshot) => {
+                const counts: Record<string, number> = {};
+                usersSnapshot.forEach((doc) => {
+                    const claimed: string[] = doc.data().claimedEggs ?? [];
+                    claimed.forEach((eggId) => { counts[eggId] = (counts[eggId] || 0) + 1; });
+                });
+                eggClaimCounts = counts;
+            })
+            .catch(() => {
+                eggClaimCounts = {};
+            });
+    });
 
     const EVENT_COLORS: { key: string; label: string; hex: string }[] = [
         { key: 'blue', label: 'Peacock', hex: '#039be5' },
@@ -67,6 +99,11 @@
         { key: 'purple', label: 'Grape', hex: '#8e24aa' },
         { key: 'orange', label: 'Tangerine', hex: '#f4511e' },
         { key: 'red', label: 'Tomato', hex: '#d50000' },
+        { key: 'flamingo', label: 'Flamingo', hex: '#e67c73' },
+        { key: 'banana', label: 'Banana', hex: '#f6bf26' },
+        { key: 'sage', label: 'Sage', hex: '#33b679' },
+        { key: 'blueberry', label: 'Blueberry', hex: '#3f51b5' },
+        { key: 'lavender', label: 'Lavender', hex: '#7986cb' },
     ];
 
     function getColorMeta(key: string) {
@@ -78,7 +115,7 @@
     let featuredEvent = $derived.by(() => {
         const todayStr = formatDate(new Date());
         const upcomingFeatured = events
-            .filter(e => e.featured && e.date >= todayStr)
+            .filter(e => e.date >= todayStr || (e.endDate && e.endDate >= todayStr))
             .sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime));
         
         return upcomingFeatured.length > 0 ? upcomingFeatured[0] : null;
@@ -87,10 +124,27 @@
     let upcomingEvents = $derived.by(() => {
         const todayStr = formatDate(new Date());
         return events
-            .filter(e => e.date >= todayStr)
+            .filter(e => e.date >= todayStr || (e.endDate && e.endDate >= todayStr))
             .sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime))
             .slice(0, 5);
     });
+
+    function eventDateRangeLabel(e: Event): string {
+        if (!e.endDate || e.endDate <= e.date) return '';
+        const start = parseDateOnly(e.date);
+        const end = parseDateOnly(e.endDate);
+        const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
+        const startLabel = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const endLabel = end.toLocaleDateString('en-US', sameMonth ? { day: 'numeric' } : { month: 'short', day: 'numeric' });
+        return `${startLabel} – ${endLabel}`;
+    }
+
+    function formatDateRangeLong(date: string, endDate?: string | null): string {
+        const start = parseDateOnly(date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+        if (!endDate || endDate <= date) return start;
+        const end = parseDateOnly(endDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+        return `${start} – ${end}`;
+    }
 
     function generateEventPin(): string {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -202,6 +256,20 @@
         showDetailModal = true;
     }
 
+    function navigateToEvent(event: Event) {
+        currentView = 'week';
+        currentDate = parseDateOnly(event.date);
+        tick().then(() => {
+            renderCalendar();
+            const el = document.querySelector(`.event[data-event-id="${event.id}"]`);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.classList.add('event-pulse');
+                setTimeout(() => el.classList.remove('event-pulse'), 1800);
+            }
+        });
+    }
+
     function closeDetailModal() {
         showDetailModal = false;
         selectedEvent = null;
@@ -225,6 +293,7 @@
             headerCell.innerHTML = `
                 <div class="week-day-name">${WEEKDAY_NAMES[day.getDay()]}</div>
                 <div class="week-day-number ${isToday(day) ? 'today' : ''}">${day.getDate()}</div>
+                <div class="week-day-allday" data-date="${formatDate(day)}"></div>
             `;
             headerRow.appendChild(headerCell);
         });
@@ -338,23 +407,34 @@
                 if (modalTitle) modalTitle.textContent = 'Edit Event';
                 if (eventTitle) eventTitle.value = event.title;
                 if (eventDate) eventDate.value = event.date;
+                if (eventEndDate) eventEndDate.value = event.endDate || event.date;
                 if (eventStart) eventStart.value = event.startTime;
                 if (eventEnd) eventEnd.value = event.endTime;
                 if (eventDescription) eventDescription.value = event.description || '';
                 if (eventRsvpLink) eventRsvpLink.value = event.rsvpLink || '';
                 isFeatured = event.featured || false;
                 formColor = event.color;
+                formType = event.type || 'event';
+                formPoints = event.points ?? 10;
                 editingEventId = event.id;
+                const allDay = (event.type && event.type !== 'event') || event.allDay;
+                if (allDay) {
+                    if (eventStart) eventStart.value = '';
+                    if (eventEnd) eventEnd.value = '';
+                }
             } else {
                 if (modalTitle) modalTitle.textContent = 'Add New Event'
                 if (eventTitle) eventTitle.value = '';
                 if (eventDate) eventDate.value = date ? formatDate(date) : formatDate(currentDate);
+                if (eventEndDate) eventEndDate.value = date ? formatDate(date) : formatDate(currentDate);
                 if (eventStart) eventStart.value = hour ? `${hour.toString().padStart(2, '0')}:00` : `09:00`
                 if (eventEnd) eventEnd.value = hour ? `${(hour+1).toString().padStart(2, '0')}:00` : `10:00`
                 if (eventDescription) eventDescription.value = '';
                 if (eventRsvpLink) eventRsvpLink.value = '';
                 isFeatured = false;
                 formColor = 'blue';
+                formType = 'event';
+                formPoints = 10;
                 editingEventId = null;
             }
 
@@ -384,47 +464,103 @@
         }
 
         const title = eventTitle?.value.trim() || '';
-        const description = eventDescription?.value.trim() || '';
         const date = eventDate?.value || '';
+        const endDateInput = eventEndDate?.value || '';
         const startTime = eventStart?.value || '';
         const endTime = eventEnd?.value || '';
         const color = formColor || 'blue';
         const featured = isFeatured;
-        const rsvpLink = eventRsvpLink?.value.trim() || "";
 
-        if (!title || !date || !startTime || !endTime) {
-            alert('Please fill in all required fields.')
+        const type: EventType = formType;
+        const allDay = type !== 'event';
+
+        if (!title || !date) {
+            alert('Please fill in the title and date.')
             return;
         }
 
-        if (startTime >= endTime) {
+        const multiDay = endDateInput && endDateInput > date;
+        const endDate = multiDay ? endDateInput : null;
+
+        if (endDate && endDate < date) {
+            alert('End date cannot be before the start date.');
+            return;
+        }
+
+        if (!allDay && (!startTime || !endTime)) {
+            alert('Please fill in the start and end time.')
+            return;
+        }
+
+        if (!allDay && startTime >= endTime) {
             alert('End time must be after start time.');
             return;
         }
 
-        const eventData: Event = {
-            id: editingEventId || Date.now().toString(),
+        const eventData: Record<string, unknown> = {
             title,
-            description: description || undefined,
             date,
-            startTime,
-            endTime,
             color,
-            pin: editingEventId ? (events.find(e => e.id === editingEventId)?.pin) : generateEventPin(),
             featured,
-            rsvpLink
+            type,
+            allDay,
+        };
+
+        if (endDate) {
+            eventData.endDate = endDate;
+        } else if (editingEventId) {
+            eventData.endDate = null;
+        }
+
+        if (!allDay) {
+            eventData.startTime = startTime;
+            eventData.endTime = endTime;
+        } else if (editingEventId) {
+            eventData.startTime = null;
+            eventData.endTime = null;
+        }
+
+        const description = eventDescription?.value.trim();
+        if (description) eventData.description = description;
+
+        if (type === 'event') {
+            const rsvpLink = eventRsvpLink?.value.trim();
+            if (rsvpLink) eventData.rsvpLink = rsvpLink;
+            eventData.points = formPoints || 10;
+        } else if (type === 'easter-egg') {
+            eventData.points = formPoints || 10;
         }
 
         try {
-            if(editingEventId) {
-                await database.updateDocInFirebase(editingEventId, "events", eventData);
+            let savedId: string | null = editingEventId;
+            if (editingEventId) {
+                await database.updateDocInFirebase(editingEventId, "events", eventData as never);
                 const index = events.findIndex(event => event.id === editingEventId)
                 if (index !== -1) {
-                    events[index] = eventData;
+                    events[index] = {
+                        ...events[index],
+                        ...(eventData as Partial<Event>),
+                        endDate: (eventData.endDate as string | null) ?? null,
+                        startTime: allDay ? '' : startTime,
+                        endTime: allDay ? '' : endTime,
+                    } as Event;
                 }
             } else {
-                await database.addToFirebase(eventData, "events");
-                events.push(eventData);
+                savedId = await database.addToFirebase(eventData, "events");
+                if (savedId) {
+                    events.push({ ...(eventData as Event), id: savedId });
+                }
+            }
+
+            if (type === 'event' && savedId) {
+                let existingPin: string | null = null;
+                if (editingEventId) {
+                    const pinDoc = await database.getDocFromFirebase(savedId, "eventPins");
+                    existingPin = pinDoc
+                        ? ((pinDoc.data as { pin?: string } | undefined)?.pin ?? null)
+                        : null;
+                }
+                await database.setDocInFirebase(savedId, "eventPins", { pin: existingPin || generateEventPin() });
             }
 
             renderEvents();
@@ -438,23 +574,61 @@
         const existingEvents = document.querySelectorAll('.event')
         existingEvents.forEach(event => event.remove())
 
+        const isAllDay = (e: Event) => e.allDay || (!!e.type && e.type !== 'event');
+        const lastDay = (e: Event) => e.endDate || e.date;
+        const coversDay = (e: Event, day: string) => e.date <= day && day <= lastDay(e);
+
         if (currentView === 'week') {
             const weekDays = getWeekDays(currentDate);
             weekDays.forEach(day => {
-                const dayEvents = events.filter(e => e.date === formatDate(day));
-                dayEvents.forEach(event => renderWeekEvent(event, day));
+                const dayStr = formatDate(day);
+                const dayEvents = events.filter(e => coversDay(e, dayStr)).sort((a, b) => Number(isAllDay(b)) - Number(isAllDay(a)));
+                dayEvents.forEach(event => renderWeekEvent(event, day, event.date !== dayStr));
             });
         } else {
             const monthDays = getMonthDays(currentDate);
             monthDays.forEach(day => {
-                const dayEvents = events.filter(e => e.date === formatDate(day));
-                dayEvents.forEach(event => renderMonthEvent(event, day));
+                const dayStr = formatDate(day);
+                const dayEvents = events.filter(e => coversDay(e, dayStr)).sort((a, b) => Number(isAllDay(b)) - Number(isAllDay(a)));
+                dayEvents.forEach(event => renderMonthEvent(event, day, event.date !== dayStr));
             });
         }
     }
 
-    function renderWeekEvent(event: Event, day: Date) {
+    function eggBadge(event: Event): string {
+        if (event.type !== 'easter-egg') return '';
+        if (authState.isOfficer) {
+            const n = eggClaimCounts[event.id] || 0;
+            return ` · claimed ${n}`;
+        }
+        if (claimedEggIds.includes(event.id)) return ' · ✓ claimed';
+        return '';
+    }
+
+    function renderWeekEvent(event: Event, day: Date, isContinuation = false) {
         if (!calendarBody) return;
+
+        const isAllDay = (event.allDay) || (event.type && event.type !== 'event');
+
+        if (isAllDay) {
+            const alldayContainer = calendarBody.querySelector(`.week-day-allday[data-date="${formatDate(day)}"]`) as HTMLElement;
+            const slot = alldayContainer || calendarBody;
+            const eventElement = document.createElement('div');
+            const typeClass = event.type && event.type !== 'event' ? ` event-${event.type}` : '';
+            const claimedClass = event.type === 'easter-egg' && claimedEggIds.includes(event.id) ? ' event-claimed' : '';
+            eventElement.className = `event event-${event.color}${typeClass}${claimedClass} event-allday`;
+            const typeIcon = event.type === 'task' ? '📌 ' : event.type === 'easter-egg' ? '🥚 ' : '';
+            const contIcon = isContinuation ? '↪ ' : '';
+            eventElement.textContent = `${contIcon}${typeIcon}${event.title}${eggBadge(event)}`;
+            eventElement.dataset.eventId = event.id;
+            eventElement.title = isContinuation ? `${event.title} (continues from ${event.date})` : event.title;
+            eventElement.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openDetailModal(event);
+            });
+            slot.appendChild(eventElement);
+            return;
+        }
 
         const timeSlotsContainer = calendarBody.querySelector('.week-time-slots') as HTMLElement;
         const container = timeSlotsContainer || calendarBody;
@@ -464,10 +638,14 @@
         if (dayIndex === -1) return;
 
         const eventElement = document.createElement('div');
-        eventElement.className = `event event-${event.color}`;
+        const typeClass = event.type && event.type !== 'event' ? ` event-${event.type}` : '';
+        const claimedClass = event.type === 'easter-egg' && claimedEggIds.includes(event.id) ? ' event-claimed' : '';
+        eventElement.className = `event event-${event.color}${typeClass}${claimedClass}`;
         const startTimeAmPm = formatTimeWithAmPm(event.startTime);
         const endTimeAmPm = formatTimeWithAmPm(event.endTime);
-        eventElement.innerHTML = `<div class="event-title">${event.title}</div><div class="event-time">${startTimeAmPm} - ${endTimeAmPm}</div>`;
+        const typeIcon = event.type === 'task' ? '📌' : event.type === 'easter-egg' ? '🥚' : '';
+        const contIcon = isContinuation ? '↪ ' : '';
+        eventElement.innerHTML = `<div class="event-title">${contIcon}${typeIcon} ${event.title}${eggBadge(event)}</div><div class="event-time">${startTimeAmPm} - ${endTimeAmPm}</div>`;
         eventElement.dataset.eventId = event.id;
 
         const startParts = event.startTime.split(':');
@@ -501,7 +679,7 @@
         container.appendChild(eventElement);
     }
 
-    function renderMonthEvent(event: Event, day: Date) {
+    function renderMonthEvent(event: Event, day: Date, isContinuation = false) {
         if (!calendarBody) return;
         
         const monthDays = getMonthDays(currentDate);
@@ -515,10 +693,17 @@
         if (!eventsContainer) return;
 
         const eventElement = document.createElement('div');
-        eventElement.className = `event event-${event.color} month-event`;
-        eventElement.textContent = event.title;
+        const typeClass = event.type && event.type !== 'event' ? ` event-${event.type}` : '';
+        const claimedClass = event.type === 'easter-egg' && claimedEggIds.includes(event.id) ? ' event-claimed' : '';
+        eventElement.className = `event event-${event.color} month-event${typeClass}${claimedClass}`;
+        const typeIcon = event.type === 'task' ? '📌 ' : event.type === 'easter-egg' ? '🥚 ' : '';
+        const contIcon = isContinuation ? '↪ ' : '';
+        eventElement.textContent = `${contIcon}${typeIcon}${event.title}${eggBadge(event)}`;
         eventElement.dataset.eventId = event.id;
-        eventElement.title = `${event.title} (${event.startTime} – ${event.endTime})`;
+        const isAllDayEvent = event.allDay || (!!event.type && event.type !== 'event');
+        eventElement.title = isAllDayEvent
+            ? `${event.title} (all day)`
+            : `${event.title} (${event.startTime} – ${event.endTime})`;
 
         eventElement.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -581,12 +766,68 @@
         e.stopPropagation();
     }
 
+    async function claimEasterEgg() {
+        if (!authState.user || !selectedEvent) return;
+        if (selectedEvent.type !== 'easter-egg') return;
+
+        if (authState.isOfficer) {
+            alert("Officers can't claim easter eggs.");
+            return;
+        }
+
+        if (claimedEggIds.includes(selectedEvent.id)) {
+            alert("You've already claimed this easter egg!");
+            return;
+        }
+
+        const points = selectedEvent.points || 10;
+
+        try {
+            const token = await auth?.currentUser?.getIdToken();
+            if (!token) {
+                alert("Please log in again.");
+                return;
+            }
+
+            const response = await fetch("/api/claim-egg", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ eventId: selectedEvent.id }),
+            });
+            const result = await response.json();
+
+            if (!response.ok || !result.ok) {
+                alert(result.error || "You've already claimed this easter egg!");
+                claimedEggIds = authState.user?.claimedEggs ?? [];
+                return;
+            }
+
+            if (authState.user) {
+                authState.user.points = result.points;
+                authState.user.claimedEggs = [...(authState.user.claimedEggs ?? []), selectedEvent.id];
+            }
+            claimedEggIds = [...claimedEggIds, selectedEvent.id];
+
+            eggClaimCounts = { ...eggClaimCounts, [selectedEvent.id]: (eggClaimCounts[selectedEvent.id] || 0) + 1 };
+            renderEvents();
+
+            alert(`You found an easter egg! +${points} points!`);
+        } catch (error) {
+            console.error("Failed to claim easter egg:", error);
+            alert("Could not claim the easter egg. Try again.");
+        }
+    }
+
     async function handleDelete(event: Event) {
         if (!event) return;
 
         if (confirm("Are you sure you want to delete this event?")) {
             try {
                 await database.deleteFromFirebase(event.id, "events");
+                await database.deleteFromFirebase(event.id, "eventPins");
                 events = events.filter(evt => evt.id !== event.id);
                 renderEvents();
                 closeDetailModal();
@@ -609,12 +850,15 @@
                     title: data.title,
                     description: data.description,
                     date: data.date,
+                    endDate: data.endDate ?? null,
                     startTime: data.startTime,
                     endTime: data.endTime,
                     color: data.color,
-                    pin: data.pin,
                     featured: data.featured || false,
-                    rsvpLink: data.rsvpLink
+                    rsvpLink: data.rsvpLink,
+                    type: data.type as EventType | undefined,
+                    points: data.points,
+                    allDay: data.allDay || false
                 };
             }) as Event[];
         } catch (error) {
@@ -648,17 +892,25 @@
                 <ul class="upcoming-list">
                     {#each upcomingEvents as ev (ev.id)}
                         <li class="upcoming-row">
-                            <button type="button" class="upcoming-item" style="--swatch-color: {getColorMeta(ev.color).hex}" onclick={() => openDetailModal(ev)}>
+                            <button type="button" class="upcoming-item" style="--swatch-color: {getColorMeta(ev.color).hex}" onclick={() => navigateToEvent(ev)}>
                                 <span class="upcoming-date-chip">
                                     <span class="upcoming-date-month">{parseDateOnly(ev.date).toLocaleDateString('en-US', { month: 'short' })}</span>
                                     <span class="upcoming-date-day">{parseDateOnly(ev.date).getDate()}</span>
                                 </span>
                                 <span class="upcoming-info">
-                                    <span class="upcoming-title">{ev.title}</span>
-                                    <span class="upcoming-time">{formatTimeWithAmPm(ev.startTime)} – {formatTimeWithAmPm(ev.endTime)}</span>
+                                    <span class="upcoming-title">{ev.type && ev.type !== 'event' ? (ev.type === 'task' ? '📌 ' : '🥚 ') : ''}{ev.title}</span>
+                                    <span class="upcoming-time">
+                                        {#if ev.type && ev.type !== 'event'}
+                                            All day{eventDateRangeLabel(ev) ? ` · ${eventDateRangeLabel(ev)}` : ''}
+                                        {:else if eventDateRangeLabel(ev)}
+                                            {eventDateRangeLabel(ev)} · {formatTimeWithAmPm(ev.startTime)} – {formatTimeWithAmPm(ev.endTime)}
+                                        {:else}
+                                            {formatTimeWithAmPm(ev.startTime)} – {formatTimeWithAmPm(ev.endTime)}
+                                        {/if}
+                                    </span>
                                 </span>
                             </button>
-                            {#if ev.rsvpLink}
+                            {#if ev.type !== 'task' && ev.type !== 'easter-egg' && ev.rsvpLink}
                                 <a class="upcoming-rsvp-btn" href={ev.rsvpLink} target="_blank" rel="noopener noreferrer" aria-label="RSVP for {ev.title}">
                                     RSVP
                                 </a>
@@ -676,13 +928,13 @@
             </span>
             {#if featuredEvent}
                 <h2 class="featured-title">{featuredEvent.title}</h2>
-                <p class="featured-meta">{parseDateOnly(featuredEvent.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+                <p class="featured-meta">{formatDateRangeLong(featuredEvent.date, featuredEvent.endDate)}</p>
                 <p class="featured-desc">{featuredEvent.description || 'Join us for this upcoming event!'}</p>
                 <div class="featured-actions">
-                    <button type="button" class="featured-cta featured-cta-secondary" onclick={() => openDetailModal(featuredEvent)}>
-                        View details
+                    <button type="button" class="featured-cta featured-cta-secondary" onclick={() => navigateToEvent(featuredEvent)}>
+                        View on calendar
                     </button>
-                    {#if featuredEvent.rsvpLink}
+                    {#if featuredEvent.type !== 'task' && featuredEvent.type !== 'easter-egg' && featuredEvent.rsvpLink}
                         <a class="featured-cta" href={featuredEvent.rsvpLink} target="_blank" rel="noopener noreferrer">
                             RSVP
                             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -770,14 +1022,26 @@
                 <button class="btn-close" onclick={closeDetailModal} aria-label="Close event details">×</button>
             </div>
             <div class="detail-body">
-                <div class="detail-row">
-                    <strong>Date:</strong>
-                    <span>{parseDateOnly(selectedEvent.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
-                </div>
+            <div class="detail-row">
+                <strong>Date:</strong>
+                <span>{formatDateRangeLong(selectedEvent.date, selectedEvent.endDate)}</span>
+            </div>
                 <div class="detail-row">
                     <strong>Time:</strong>
-                    <span>{formatTimeWithAmPm(selectedEvent.startTime)} – {formatTimeWithAmPm(selectedEvent.endTime)}</span>
+                    {#if selectedEvent.allDay || (selectedEvent.type && selectedEvent.type !== 'event')}
+                        <span>All day</span>
+                    {:else}
+                        <span>{formatTimeWithAmPm(selectedEvent.startTime)} – {formatTimeWithAmPm(selectedEvent.endTime)}</span>
+                    {/if}
                 </div>
+                {#if selectedEvent.type}
+                    <div class="detail-row">
+                        <strong>Type:</strong>
+                        <span class="type-badge type-badge-{selectedEvent.type}">
+                            {selectedEvent.type === 'task' ? 'Task / Reminder' : selectedEvent.type === 'easter-egg' ? 'Easter Egg' : 'Event'}
+                        </span>
+                    </div>
+                {/if}
                 <div class="detail-row">
                     <div class="color-value">
                         <span class="detail-label">Color:</span>
@@ -791,9 +1055,23 @@
                         <p>{selectedEvent.description}</p>
                     </div>
                 {/if}
+                {#if selectedEvent.type === 'easter-egg'}
+                    <div class="detail-section egg-section">
+                        <strong>🥚 Easter Egg</strong>
+                        <p>You found a hidden easter egg! Claim it to earn {selectedEvent.points || 10} points — but only once.</p>
+                    </div>
+                {/if}
             </div>
             <div class="modal-actions">
-            {#if selectedEvent.rsvpLink}
+            {#if selectedEvent.type === 'easter-egg'}
+                {#if authState.isOfficer}
+                    <span class="btn btn-disabled">🥚 Claimed by {eggClaimCounts[selectedEvent.id] || 0}</span>
+                {:else if authState.user && claimedEggIds.includes(selectedEvent.id)}
+                    <span class="btn btn-disabled">✓ Claimed</span>
+                {:else if authState.user}
+                    <button type="button" class="btn btn-primary" onclick={claimEasterEgg}>Claim {selectedEvent.points || 10} pts</button>
+                {/if}
+            {:else if selectedEvent.rsvpLink}
                 <a class="btn btn-primary" href={selectedEvent.rsvpLink} target="_blank" rel="noopener noreferrer">RSVP</a>
             {/if}
             {#if authState.isOfficer}<button type="button" class="btn btn-primary" onclick={() => selectedEvent && openEventModal(null, selectedEvent)}>Edit</button>
@@ -813,40 +1091,52 @@
                 <input type="text" id="eventTitle" placeholder="Enter Event Title" bind:this={eventTitle} required>
             </div>
             
-            <div class="form-group">
-                <label for="eventDate">Date</label>
-                <input type="date" id="eventDate" bind:this={eventDate} required>
+            <div class="form-group form-row">
+                <div>
+                    <label for="eventDate">Start Date</label>
+                    <input type="date" id="eventDate" bind:this={eventDate} required>
+                </div>
+                <div>
+                    <label for="eventEndDate">End Date <span class="optional-label">(optional)</span></label>
+                    <input type="date" id="eventEndDate" bind:this={eventEndDate} min={eventDate?.value}>
+                </div>
             </div>
             
-            <div class="form-group">
-                <label for="eventStart">Start Time</label>
-                <input type="time" id="eventStart" bind:this={eventStart} required>
-            </div>
-            
-            <div class="form-group">
-                <label for="eventEnd">End Time</label>
-                <input type="time" id="eventEnd" bind:this={eventEnd} required>
-            </div>
+            {#if formType === 'event'}
+                <div class="form-group">
+                    <label for="eventStart">Start Time</label>
+                    <input type="time" id="eventStart" bind:this={eventStart} required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="eventEnd">End Time</label>
+                    <input type="time" id="eventEnd" bind:this={eventEnd} required>
+                </div>
+            {:else}
+                <p class="allday-hint">📅 All-day — pinned at the top of the day.{eventDate?.value && eventEndDate?.value && eventEndDate.value > eventDate.value ? ` Spans through ${eventEndDate.value}.` : ''}</p>
+            {/if}
 
             <div class="form-group">
                 <label for="eventDescription">Description</label>
                 <textarea id="eventDescription" placeholder="Enter event description (optional)" bind:this={eventDescription} rows="4" onwheel={handleTextareaWheel}></textarea>
             </div>
 
-            <div class="form-group">
-                <label for="eventRsvpLink">RSVP Link</label>
-                <input type="url" id="eventRsvpLink" placeholder="https://gdg.community.dev/e/... (optional)" bind:this={eventRsvpLink}>
-            </div>
+            {#if formType === 'event'}
+                <div class="form-group">
+                    <label for="eventRsvpLink">RSVP Link</label>
+                    <input type="url" id="eventRsvpLink" placeholder="https://gdg.community.dev/e/... (optional)" bind:this={eventRsvpLink}>
+                </div>
 
-            <div class="form-group checkbox-group">
-                <input 
-                    type="checkbox" 
-                    id="eventFeatured" 
-                    bind:checked={isFeatured}
-                    style="appearance: auto; -webkit-appearance: checkbox;"
-                >
-                <label for="eventFeatured">Mark as featured event</label>
-            </div>
+                <div class="form-group checkbox-group">
+                    <input 
+                        type="checkbox" 
+                        id="eventFeatured" 
+                        bind:checked={isFeatured}
+                        style="appearance: auto; -webkit-appearance: checkbox;"
+                    >
+                    <label for="eventFeatured">Mark as featured event</label>
+                </div>
+            {/if}
 
             <div class="form-group">
                 <span class="swatch-label" id="eventColorLabel">Event Color</span>
@@ -867,6 +1157,43 @@
                     {/each}
                 </div>
             </div>
+
+            <div class="form-group">
+                <span class="swatch-label" id="eventTypeLabel">Event Type</span>
+                <div class="swatch-row" role="radiogroup" aria-labelledby="eventTypeLabel">
+                    <button
+                        type="button"
+                        class="type-option {formType === 'event' ? 'selected' : ''}"
+                        role="radio"
+                        aria-checked={formType === 'event'}
+                        title="A normal event with check-in points"
+                        onclick={() => { formType = 'event'; formPoints = 10; }}
+                    >Event</button>
+                    <button
+                        type="button"
+                        class="type-option {formType === 'task' ? 'selected' : ''}"
+                        role="radio"
+                        aria-checked={formType === 'task'}
+                        title="A reminder for the day — no points or check-in code"
+                        onclick={() => { formType = 'task'; formPoints = 0; }}
+                    >Task</button>
+                    <button
+                        type="button"
+                        class="type-option {formType === 'easter-egg' ? 'selected' : ''}"
+                        role="radio"
+                        aria-checked={formType === 'easter-egg'}
+                        title="A hidden find — click to claim points once"
+                        onclick={() => { formType = 'easter-egg'; formPoints = 10; }}
+                    >🥚 Easter Egg</button>
+                </div>
+            </div>
+
+            {#if formType !== 'task'}
+                <div class="form-group">
+                    <label for="eventPoints">Points to Award</label>
+                    <input type="number" id="eventPoints" min="0" bind:value={formPoints}>
+                </div>
+            {/if}
 
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" id="cancelBtn" bind:this={cancelBtn}>Cancel</button>
@@ -1440,7 +1767,7 @@
     }
 
     :global(.time-labels.week-labels) {
-        padding-top: 60px;
+        padding-top: 88px;
         display: flex;
         flex-direction: column;
         width: 80px;
@@ -1484,7 +1811,7 @@
         display: grid;
         grid-template-columns: repeat(7, 1fr);
         width: 100%;
-        height: 60px;
+        height: 88px;
         box-sizing: border-box;
     }
 
@@ -1503,13 +1830,43 @@
     }
 
     :global(.week-day-header) {
-        height: 60px;
+        min-height: 88px;
         padding: 0;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         border-right: 1px solid var(--gcal-outline-soft);
+    }
+
+    :global(.week-day-allday) {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 2px;
+        width: 100%;
+        margin-top: 2px;
+        padding: 0 2px 2px;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--gcal-outline) transparent;
+    }
+
+    :global(.event-allday) {
+        position: relative !important;
+        left: auto !important;
+        right: auto !important;
+        width: 100% !important;
+        border-radius: 5px;
+        padding: 2px 6px;
+        font-size: 10px;
+        font-weight: 600;
+        box-sizing: border-box;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     :global(.week-day-header:last-child) {
@@ -1703,6 +2060,24 @@
     :global(.event-purple) { background-color: #8e24aa; }
     :global(.event-orange) { background-color: #f4511e; }
     :global(.event-red) { background-color: #d50000; }
+    :global(.event-flamingo) { background-color: #e67c73; }
+    :global(.event-banana) { background-color: #f6bf26; }
+    :global(.event-sage) { background-color: #33b679; }
+    :global(.event-blueberry) { background-color: #3f51b5; }
+    :global(.event-lavender) { background-color: #7986cb; }
+
+    :global(.event) { --ev-text: #1c1b1d; }
+    :global(.dark .event) { --ev-text: #e8eaed; }
+    :global(.event-blue) { --ev: #039be5; background: color-mix(in srgb, #039be5 18%, var(--gcal-surface)); color: var(--ev-text); border-left: 3px solid #039be5; }
+    :global(.event-green) { --ev: #0b8043; background: color-mix(in srgb, #0b8043 16%, var(--gcal-surface)); color: var(--ev-text); border-left: 3px solid #0b8043; }
+    :global(.event-purple) { --ev: #8e24aa; background: color-mix(in srgb, #8e24aa 18%, var(--gcal-surface)); color: var(--ev-text); border-left: 3px solid #8e24aa; }
+    :global(.event-orange) { --ev: #f4511e; background: color-mix(in srgb, #f4511e 18%, var(--gcal-surface)); color: var(--ev-text); border-left: 3px solid #f4511e; }
+    :global(.event-red) { --ev: #d50000; background: color-mix(in srgb, #d50000 16%, var(--gcal-surface)); color: var(--ev-text); border-left: 3px solid #d50000; }
+    :global(.event-flamingo) { --ev: #e67c73; background: color-mix(in srgb, #e67c73 22%, var(--gcal-surface)); color: var(--ev-text); border-left: 3px solid #e67c73; }
+    :global(.event-banana) { --ev: #f6bf26; background: color-mix(in srgb, #f6bf26 26%, var(--gcal-surface)); color: var(--ev-text); border-left: 3px solid #f6bf26; }
+    :global(.event-sage) { --ev: #33b679; background: color-mix(in srgb, #33b679 20%, var(--gcal-surface)); color: var(--ev-text); border-left: 3px solid #33b679; }
+    :global(.event-blueberry) { --ev: #3f51b5; background: color-mix(in srgb, #3f51b5 20%, var(--gcal-surface)); color: var(--ev-text); border-left: 3px solid #3f51b5; }
+    :global(.event-lavender) { --ev: #7986cb; background: color-mix(in srgb, #7986cb 22%, var(--gcal-surface)); color: var(--ev-text); border-left: 3px solid #7986cb; }
 
     :global(.month-event) {
         position: relative;
@@ -1726,6 +2101,43 @@
         font-size: 10px;
         opacity: 0.9;
         margin-top: 1px;
+    }
+
+    :global(.event-task) {
+        background: color-mix(in srgb, #0b8043 16%, var(--gcal-surface)) !important;
+        border: 1px dashed rgba(11, 128, 67, 0.6);
+        color: var(--ev-text);
+    }
+
+    :global(.event-easter-egg) {
+        background: color-mix(in srgb, #f4511e 18%, var(--gcal-surface)) !important;
+        border: 1px solid rgba(245, 81, 30, 0.8);
+        box-shadow: 0 0 10px rgba(245, 81, 30, 0.3);
+        color: var(--ev-text);
+    }
+
+    :global(.event-task .event-title),
+    :global(.event-easter-egg .event-title) {
+        color: inherit;
+    }
+
+    :global(.event-claimed) {
+        opacity: 0.82;
+    }
+
+    :global(.event-allday) {
+        color: var(--gcal-text) !important;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .optional-label {
+        font-weight: 400;
+        opacity: 0.75;
     }
 
     .modal {
@@ -1770,6 +2182,8 @@
         padding: 28px;
         width: 90%;
         max-width: 420px;
+        max-height: calc(100dvh - 40px);
+        overflow-y: auto;
         box-shadow: var(--gcal-shadow-3);
         animation: gcalDialogIn 0.18s cubic-bezier(0.2, 0, 0, 1);
     }
@@ -1818,6 +2232,27 @@
         resize: vertical;
     }
 
+    .allday-hint {
+        margin: 0 0 16px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: var(--gcal-primary-tint-1);
+        color: var(--gcal-text-muted);
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    :global(.event-pulse) {
+        animation: gcalEventPulse 1.8s ease;
+        z-index: 20;
+    }
+
+    @keyframes gcalEventPulse {
+        0%   { box-shadow: 0 0 0 0 var(--gcal-primary-tint-3); }
+        40%  { box-shadow: 0 0 0 8px var(--gcal-primary-tint-2); }
+        100% { box-shadow: 0 0 0 0 transparent; }
+    }
+
     .form-group input:focus,
     .form-group textarea:focus {
         outline: none;
@@ -1860,6 +2295,63 @@
 
     .color-swatch.selected svg {
         opacity: 1;
+    }
+
+    .type-option {
+        border: 1px solid var(--gcal-outline);
+        background: var(--gcal-surface);
+        color: var(--gcal-text-muted);
+        border-radius: 999px;
+        padding: 6px 14px;
+        font-size: 13px;
+        font-family: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .type-option:hover {
+        border-color: var(--gcal-primary);
+        color: var(--gcal-text);
+    }
+
+    .type-option.selected {
+        background: var(--gcal-primary);
+        border-color: var(--gcal-primary);
+        color: #fff;
+        box-shadow: 0 0 0 2px var(--gcal-primary-tint-2);
+    }
+
+    .type-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+    }
+
+    .type-badge-event {
+        background: var(--gcal-primary-tint-2);
+        color: var(--gcal-primary);
+    }
+
+    .type-badge-task {
+        background: rgba(11, 128, 67, 0.15);
+        color: #0b8043;
+    }
+
+    .type-badge-easter-egg {
+        background: rgba(245, 81, 30, 0.15);
+        color: #f4511e;
+    }
+
+    .btn-disabled {
+        opacity: 0.7;
+        cursor: default;
+        display: inline-flex;
+        align-items: center;
     }
 
     .color-swatch:focus-visible {
@@ -2019,6 +2511,11 @@
 
         :global(.month-day-cell) {
             min-height: 60px;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 0;
         }
 
         .modal-content {

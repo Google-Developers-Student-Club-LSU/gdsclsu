@@ -3,4 +3,5 @@ export interface User {
   username: string | null;
   points: number;
   permissions: string;
+  claimedEggs?: string[];
 }

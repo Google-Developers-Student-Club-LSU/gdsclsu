@@ -32,17 +32,22 @@ function getDatabase(): Firestore | null {
   return databaseInstance;
 }
 
-export async function addToFirebase(object: Record<string, unknown>, table: string) {
+export async function addToFirebase(
+  object: Record<string, unknown>,
+  table: string,
+): Promise<string | null> {
   const db = getDatabase();
   if (!db) {
     console.error(
       "Firebase Database is not available. Check your environment variables.",
     );
-    return;
+    return null;
   }
-  await addDoc(collection(db, table), object).catch((error) => {
+  const docRef = await addDoc(collection(db, table), object).catch((error) => {
     console.error(error);
+    return null;
   });
+  return docRef ? docRef.id : null;
 }
 
 export async function createNewUserDoc(user: User): Promise<void> {
@@ -65,6 +70,24 @@ export async function deleteFromFirebase(docId: string, table: string) {
     return;
   }
   await deleteDoc(doc(db, table, docId)).catch((error) => {
+    console.error(error);
+  });
+}
+
+export async function setDocInFirebase(
+  docId: string,
+  table: string,
+  object: Record<string, unknown>,
+) {
+  const db = getDatabase();
+  if (!db) {
+    console.error(
+      "Firebase Database is not available. Check your environment variables.",
+    );
+    return;
+  }
+  const docRef = doc(db, table, docId);
+  await setDoc(docRef, object, { merge: true }).catch((error) => {
     console.error(error);
   });
 }

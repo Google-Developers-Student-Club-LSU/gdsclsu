@@ -3,16 +3,27 @@
   import Leaderboard from "$lib/components/Leaderboard.svelte";
   import { type Member } from "$lib/components/Leaderboard.svelte";
   import { authState } from "$lib/firebase/auth.svelte";
+  import { auth } from "$lib/firebase/auth";
   import * as database from "$lib/firebase/database";
   import { collection, query, where, onSnapshot } from "firebase/firestore";
   import gsap from 'gsap';
 
   let memberList = $state<Member[]>([]);
   let isLoading = $state(true);
-  let isUpdatingPoints = $state(false);
 
-  let activeEvent = $state<any>(null);
+  interface LedgerEvent {
+    id: string;
+    title?: string;
+    startTime?: string;
+    endTime?: string;
+    pin?: string;
+    type?: string;
+    points?: number;
+  }
+
+  let activeEvent = $state<LedgerEvent | null>(null);
   let pinRevealed = $state(false);
+  let revealedPin = $state("");
   let checkInterval: ReturnType<typeof setInterval>;
   let unsubscribeEvents: () => void;
 
@@ -61,16 +72,18 @@
       const q = query(eventsRef, where("date", "in", targetDates));
 
       unsubscribeEvents = onSnapshot(q, (snapshot) => {
-        const events = snapshot.docs.map(doc => ({
+        const events: LedgerEvent[] = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        }));
+        }) as LedgerEvent);
         
         const now = new Date();
         const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
                             now.getMinutes().toString().padStart(2, '0');
 
         activeEvent = events.find(e => {
+          const type = e.type || 'event';
+          if (type !== 'event') return false;
           if (!e.startTime || !e.endTime) return false;
           if (e.startTime <= e.endTime) {
             return currentTime >= e.startTime && currentTime <= e.endTime;
@@ -111,46 +124,22 @@
     }
   }
 
-  async function handleAddPoints() {
-    if (!authState.user || isUpdatingPoints) return;
-    isUpdatingPoints = true;
-    const currentPoints = authState.user.points ?? 0;
-    const updatedPoints = currentPoints;
+  async function revealActivePin() {
+    if (!activeEvent) return;
     try {
-      await database.updateDocInFirebase(authState.user.id, "users", {
-        points: updatedPoints
-      });
-      if (authState.user) {
-        authState.user.points = updatedPoints;
-      }
-
-      const index = memberList.findIndex(m => m.username === authState.user?.username);
-      if (index !== -1) {
-        memberList[index].points = updatedPoints;
-        memberList = [...memberList];
-      } else {
-        await fetchLeaderboardData();
-      }
-
-    } catch (error) {
-      console.error("Failed to update points:", error);
-      alert("Error updating points. Try again.");
-    } finally {
-      isUpdatingPoints = false;
+      const doc = await database.getDocFromFirebase(activeEvent.id, "eventPins");
+      revealedPin = doc && (doc.data as { pin?: string } | undefined)?.pin ? (doc.data as { pin: string }).pin : "----";
+    } catch {
+      revealedPin = "----";
     }
+    pinRevealed = true;
   }
 
   async function handleCheckIn() {
     if (!authState.user || !activeEvent) return;
-    
+
     checkInError = "";
     isCheckingIn = true;
-
-    if (pinInput.toUpperCase() !== activeEvent.pin.toUpperCase()) {
-      checkInError = "Incorrect PIN. Please try again.";
-      isCheckingIn = false;
-      return;
-    }
 
     if (checkedInEvents.includes(activeEvent.id)) {
       checkInError = "You have already checked into this event!";
@@ -158,34 +147,48 @@
       return;
     }
 
-    const pointsToAward = 10;
-    const currentPoints = authState.user.points ?? 0;
-    const updatedPoints = currentPoints + pointsToAward;
-
     try {
-      await database.updateDocInFirebase(authState.user.id, "users", {
-        points: updatedPoints
+      const token = await auth?.currentUser?.getIdToken();
+      if (!token) {
+        checkInError = "Please log in again.";
+        isCheckingIn = false;
+        return;
+      }
+
+      const response = await fetch("/api/check-in", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ eventId: activeEvent.id, pin: pinInput }),
       });
-      
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        checkInError = data.error || "Could not check in. Try again.";
+        isCheckingIn = false;
+        return;
+      }
+
       if (authState.user) {
-        authState.user.points = updatedPoints;
+        authState.user.points = data.points;
       }
 
       const index = memberList.findIndex(m => m.username === authState.user?.username);
       if (index !== -1) {
-        memberList[index].points = updatedPoints;
-        memberList = [...memberList]; 
+        memberList[index].points = data.points;
+        memberList = [...memberList];
       } else {
         await fetchLeaderboardData();
       }
 
-      checkedInEvents = [...checkedInEvents, activeEvent.id]; 
+      checkedInEvents = [...checkedInEvents, activeEvent.id];
       localStorage.setItem(`checkedIn_${authState.user.id}`, JSON.stringify(checkedInEvents));
-      
+
       showCheckInModal = false;
       pinInput = "";
-      alert(`Success! You earned ${pointsToAward} points for attending ${activeEvent.title}!`);
-
+      alert(`Success! You earned ${data.earned} points for attending ${activeEvent.title}!`);
     } catch (error) {
       console.error("Failed to check in:", error);
       checkInError = "Network error. Please try again.";
@@ -215,11 +218,11 @@
         {#if pinRevealed}
           <div class="px-6 py-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 
             font-mono text-3xl font-black tracking-[0.2em] text-[#9f86ff] shadow-inner text-center w-full">
-            {activeEvent.pin || '----'}
+            {revealedPin || '----'}
           </div>
         {:else}
           <button 
-            onclick={() => pinRevealed = true}
+            onclick={revealActivePin}
             class="w-full px-6 py-3 rounded-xl bg-[#9f86ff] hover:bg-[#8b6fff] text-white font-bold 
               transition-all hover:scale-105 active:scale-95 shadow-md">
             Reveal PIN

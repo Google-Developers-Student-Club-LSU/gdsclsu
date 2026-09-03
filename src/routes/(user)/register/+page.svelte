@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { createUser } from '$lib/firebase/auth';
+  import ResendVerification from '$lib/components/ResendVerification.svelte';
   import { onMount } from 'svelte';
   import gsap from 'gsap';
 
@@ -70,6 +71,12 @@
           <a href="/login" class="mt-4 w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-color hover:bg-opacity-90 transition-all">
             Go to Login &rarr;
           </a>
+          <div class="w-full mt-4">
+            <p class="text-xs text-slate-500 dark:text-slate-400 text-center mb-2">
+              Didn't get it? Check your spam folder, or send a new link below.
+            </p>
+            <ResendVerification {email} {password} />
+          </div>
         </div>
       {:else}
         <form class="space-y-6" onsubmit={handleRegister}>

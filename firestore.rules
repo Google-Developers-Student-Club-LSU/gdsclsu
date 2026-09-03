@@ -1,0 +1,43 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOfficer() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions == 'officer';
+    }
+
+    function isOwnUser(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if isOwnUser(userId)
+        && request.resource.data.permissions == 'member'
+        && request.resource.data.points == 0;
+      allow update: if isOfficer() || (isOwnUser(userId)
+        && !request.resource.data.differsFrom(resource.data).affectedKeys()
+          .hasAny(['points', 'attendedEvents', 'claimedEggs', 'permissions']));
+      allow delete: if isOfficer();
+    }
+
+    match /events/{eventId} {
+      allow read: if true;
+      allow write: if isOfficer();
+    }
+
+    match /eventPins/{eventId} {
+      allow read, write: if isOfficer();
+    }
+
+    match /tasks/{taskId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+  }
+}

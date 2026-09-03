@@ -3,21 +3,25 @@
   import gsap from 'gsap';
 
   import { signIn } from '$lib/firebase/auth';
+  import ResendVerification from '$lib/components/ResendVerification.svelte';
   import { goto} from '$app/navigation';
 
   let email = $state('');
   let password = $state('');
   let errorMessage = $state('');
+  let errorCode = $state('');
 
   async function handleLogin(e: SubmitEvent) {
     e.preventDefault();
     errorMessage = '';
+    errorCode = '';
 
     try {
       await signIn(email, password);
       goto('/');
     } catch (error: any) {
       errorMessage = error.message || 'An error occurred during login.';
+      errorCode = error?.code || '';
     }
   }
 
@@ -49,6 +53,14 @@
           <p class="mb-4 p-4 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 rounded" role="alert">
             {errorMessage}
           </p>
+          {#if errorCode === 'auth/email-not-verified'}
+            <div class="mb-4 p-4 bg-purple-500/10 dark:bg-purple-500/10 border border-primary-color/30 rounded-lg">
+              <p class="text-sm font-medium text-primary-color mb-2">
+                Didn't get the email? Send a fresh verification link.
+              </p>
+              <ResendVerification {email} {password} />
+            </div>
+          {/if}
         {/if}
 
         <div class="mb-4">
