@@ -2,11 +2,22 @@ import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { getAdminAuth, getAdminDb } from "$lib/server/firebase";
 
-function formatDate(d: Date): string {
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+const CLUB_TIME_ZONE = "America/Chicago";
+
+function clubTimeParts(now: Date): { date: string; time: string } {
+  const date = new Intl.DateTimeFormat("en-CA", {
+    timeZone: CLUB_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+  const time = new Intl.DateTimeFormat("en-US", {
+    timeZone: CLUB_TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(now);
+  return { date, time };
 }
 
 function isLiveNow(event: {
@@ -18,15 +29,14 @@ function isLiveNow(event: {
 }): boolean {
   if (!event.date || event.type !== "event") return false;
 
-  const now = new Date();
-  const localToday = formatDate(now);
+  const { date: clubToday, time } = clubTimeParts(new Date());
   const end = event.endDate || event.date;
 
-  if (localToday < event.date || localToday > end) return false;
+  if (clubToday < event.date || clubToday > end) return false;
 
   if (!event.startTime || !event.endTime) return true;
 
-  const current = now.getHours() * 60 + now.getMinutes();
+  const current = Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
   const [sh, sm] = event.startTime.split(":").map(Number);
   const [eh, em] = event.endTime.split(":").map(Number);
   const start = sh * 60 + (sm || 0);
