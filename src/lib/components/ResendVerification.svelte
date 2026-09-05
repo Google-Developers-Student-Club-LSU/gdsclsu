@@ -68,7 +68,10 @@
     {/if}
   </button>
   {#if message}
-    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed" role="status">
+    <p
+      class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed"
+      role="status"
+    >
       {message}
     </p>
   {/if}

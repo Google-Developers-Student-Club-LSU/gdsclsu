@@ -11,8 +11,8 @@ export default defineConfig([
       "build/",
       ".next/",
       "out/",
-      ".svelte-kit/"
-    ]
+      ".svelte-kit/",
+    ],
   },
   {
     files: ["**/*.{js,mjs,cjs,ts,mts,cts}"],
@@ -20,9 +20,13 @@ export default defineConfig([
     extends: ["js/recommended"],
     languageOptions: { globals: globals.browser },
     rules: {
-      "@typescript-eslint/no-empty-object-type": "warn", 
+      "@typescript-eslint/no-empty-object-type": "warn",
       "@typescript-eslint/no-explicit-any": "off",
-    }
+    },
+  },
+  {
+    files: ["scripts/**/*.{js,mjs,cjs}"],
+    languageOptions: { globals: globals.node },
   },
   tseslint.configs.recommended,
 ]);

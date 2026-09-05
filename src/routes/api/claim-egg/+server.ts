@@ -6,7 +6,10 @@ export const POST: RequestHandler = async ({ request }) => {
   const auth = getAdminAuth(request);
   const db = await getAdminDb(request);
   if (!auth || !db) {
-    return json({ ok: false, error: "Server auth is not configured." }, { status: 503 });
+    return json(
+      { ok: false, error: "Server auth is not configured." },
+      { status: 503 },
+    );
   }
 
   let body: { eventId?: string };
@@ -39,7 +42,10 @@ export const POST: RequestHandler = async ({ request }) => {
   const eventRef = db.collection("events").doc(eventId);
 
   try {
-    const [userSnap, eventSnap] = await Promise.all([userRef.get(), eventRef.get()]);
+    const [userSnap, eventSnap] = await Promise.all([
+      userRef.get(),
+      eventRef.get(),
+    ]);
 
     if (!userSnap.exists) {
       return json({ ok: false, error: "Account not found." }, { status: 404 });
@@ -47,11 +53,17 @@ export const POST: RequestHandler = async ({ request }) => {
 
     const userData = userSnap.data() || {};
     if (userData.permissions === "officer") {
-      return json({ ok: false, error: "Officers cannot claim easter eggs." }, { status: 403 });
+      return json(
+        { ok: false, error: "Officers cannot claim easter eggs." },
+        { status: 403 },
+      );
     }
 
     if (!eventSnap.exists || eventSnap.data()?.type !== "easter-egg") {
-      return json({ ok: false, error: "Easter egg not found." }, { status: 404 });
+      return json(
+        { ok: false, error: "Easter egg not found." },
+        { status: 404 },
+      );
     }
 
     const pointsToAward = Number(eventSnap.data()?.points) || 10;
@@ -62,7 +74,10 @@ export const POST: RequestHandler = async ({ request }) => {
 
       const claimedEggs: string[] = freshData.claimedEggs ?? [];
       if (claimedEggs.includes(eventId)) {
-        return { claimed: false, error: "You've already claimed this easter egg!" };
+        return {
+          claimed: false,
+          error: "You've already claimed this easter egg!",
+        };
       }
 
       const currentPoints = Number(freshData.points) || 0;
@@ -81,6 +96,9 @@ export const POST: RequestHandler = async ({ request }) => {
     return json({ ok: true, points: result.points, earned: pointsToAward });
   } catch (error) {
     console.error("Easter egg claim failed:", error);
-    return json({ ok: false, error: "Could not claim the easter egg. Try again." }, { status: 500 });
+    return json(
+      { ok: false, error: "Could not claim the easter egg. Try again." },
+      { status: 500 },
+    );
   }
 };

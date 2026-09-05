@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import gsap from 'gsap';
+  import { onMount } from "svelte";
+  import gsap from "gsap";
 
   let blob1: HTMLDivElement | undefined;
   let blob2: HTMLDivElement | undefined;
@@ -17,13 +17,13 @@
 
   function animateBlob(config: BlobConfig): void {
     const { element, duration, xRange, yRange, delay = 0 } = config;
-    
+
     const startX = gsap.utils.random(-xRange, xRange);
     const startY = gsap.utils.random(-yRange, yRange);
-    
+
     gsap.set(element, {
       x: startX,
-      y: startY
+      y: startY,
     });
 
     function createRandomMovement(): void {
@@ -35,8 +35,8 @@
         x: targetX,
         y: targetY,
         duration: randomDuration,
-        ease: 'power1.inOut',
-        onComplete: createRandomMovement
+        ease: "power1.inOut",
+        onComplete: createRandomMovement,
       });
     }
 
@@ -53,7 +53,7 @@
       const slashTopRight = gsap.utils.random(20, 80);
       const slashBottomRight = gsap.utils.random(20, 80);
       const slashBottomLeft = gsap.utils.random(20, 80);
-      
+
       return `${topLeft}% ${topRight}% ${bottomRight}% ${bottomLeft}% / ${slashTopLeft}% ${slashTopRight}% ${slashBottomRight}% ${slashBottomLeft}%`;
     }
 
@@ -64,8 +64,8 @@
       gsap.to(element, {
         borderRadius: randomBorderRadius,
         duration: randomDuration,
-        ease: 'power1.inOut',
-        onComplete: morphShape
+        ease: "power1.inOut",
+        onComplete: morphShape,
       });
     }
 
@@ -80,7 +80,7 @@
       duration: 6,
       xRange: 300,
       yRange: 250,
-      delay: 0
+      delay: 0,
     });
 
     animateBlob({
@@ -88,7 +88,7 @@
       duration: 7,
       xRange: 280,
       yRange: 300,
-      delay: 0.5
+      delay: 0.5,
     });
 
     animateBlob({
@@ -96,7 +96,7 @@
       duration: 8,
       xRange: 350,
       yRange: 280,
-      delay: 1
+      delay: 1,
     });
 
     animateBlob({
@@ -104,7 +104,7 @@
       duration: 6.5,
       xRange: 320,
       yRange: 260,
-      delay: 0.75
+      delay: 0.75,
     });
 
     animateBlobShape(blob1, 4.5);

@@ -14,11 +14,7 @@
   type TaskStatus = "not-started" | "in-progress" | "complete";
   type TaskPriority = "low" | "medium" | "high" | "critical";
   type TaskLabel =
-    | "Event"
-    | "Organizational"
-    | "Web Dev"
-    | "Outreach"
-    | "Graphic Design";
+    "Event" | "Organizational" | "Web Dev" | "Outreach" | "Graphic Design";
 
   interface Task {
     id: string;
@@ -68,6 +64,7 @@
 
   let taskTitle: HTMLInputElement | undefined = $state(undefined);
   let taskDescription: HTMLTextAreaElement | undefined = $state(undefined);
+  let taskForm: HTMLFormElement | undefined = $state(undefined);
   let taskPriority: HTMLSelectElement | undefined = $state(undefined);
   let taskDueDate: HTMLInputElement | undefined = $state(undefined);
   let selectedLabels: TaskLabel[] = $state([]);
@@ -576,8 +573,7 @@
             id="taskDescription"
             bind:this={taskDescription}
             placeholder="Enter task description"
-            rows="4"
-          ></textarea>
+            rows="4"></textarea>
         </div>
 
         <div class="form-row">

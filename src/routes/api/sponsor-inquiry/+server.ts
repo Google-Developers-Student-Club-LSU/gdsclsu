@@ -12,7 +12,10 @@ function clean(value: unknown, maxLength: number): string {
 export const POST: RequestHandler = async ({ request }) => {
   const db = await getAdminDb(request);
   if (!db) {
-    return json({ ok: false, error: "Server auth is not configured." }, { status: 503 });
+    return json(
+      { ok: false, error: "Server auth is not configured." },
+      { status: 503 },
+    );
   }
 
   let body: Record<string, unknown>;
@@ -32,16 +35,28 @@ export const POST: RequestHandler = async ({ request }) => {
   const message = clean(body.message, 5000);
 
   if (!name) {
-    return json({ ok: false, error: "Please provide your name." }, { status: 400 });
+    return json(
+      { ok: false, error: "Please provide your name." },
+      { status: 400 },
+    );
   }
   if (!company) {
-    return json({ ok: false, error: "Please provide your company." }, { status: 400 });
+    return json(
+      { ok: false, error: "Please provide your company." },
+      { status: 400 },
+    );
   }
   if (!EMAIL_RE.test(email)) {
-    return json({ ok: false, error: "Please provide a valid email address." }, { status: 400 });
+    return json(
+      { ok: false, error: "Please provide a valid email address." },
+      { status: 400 },
+    );
   }
   if (!message) {
-    return json({ ok: false, error: "Please include a message." }, { status: 400 });
+    return json(
+      { ok: false, error: "Please include a message." },
+      { status: 400 },
+    );
   }
 
   try {
@@ -56,6 +71,9 @@ export const POST: RequestHandler = async ({ request }) => {
     return json({ ok: true });
   } catch (error) {
     console.error("Failed to save sponsor inquiry:", error);
-    return json({ ok: false, error: "Could not send your message. Please try again." }, { status: 500 });
+    return json(
+      { ok: false, error: "Could not send your message. Please try again." },
+      { status: 500 },
+    );
   }
 };

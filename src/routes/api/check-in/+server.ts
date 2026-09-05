@@ -27,7 +27,9 @@ function isLiveNow(event: {
   endTime?: string | null;
   type?: string;
 }): boolean {
-  if (!event.date || event.type !== "event") return false;
+  // Legacy events created before the event-type feature have no `type` field;
+  // treat them as regular events, matching the client-side detection.
+  if (!event.date || (event.type || "event") !== "event") return false;
 
   const { date: clubToday, time } = clubTimeParts(new Date());
   const end = event.endDate || event.date;
@@ -52,7 +54,10 @@ export const POST: RequestHandler = async ({ request }) => {
   const auth = getAdminAuth(request);
   const db = await getAdminDb(request);
   if (!auth || !db) {
-    return json({ ok: false, error: "Server auth is not configured." }, { status: 503 });
+    return json(
+      { ok: false, error: "Server auth is not configured." },
+      { status: 503 },
+    );
   }
 
   let body: { eventId?: string; pin?: string };
@@ -65,7 +70,10 @@ export const POST: RequestHandler = async ({ request }) => {
   const eventId = body.eventId?.trim();
   const pin = body.pin?.trim().toUpperCase();
   if (!eventId || !pin) {
-    return json({ ok: false, error: "Event and PIN are required." }, { status: 400 });
+    return json(
+      { ok: false, error: "Event and PIN are required." },
+      { status: 400 },
+    );
   }
 
   const authHeader = request.headers.get("authorization") || "";
@@ -99,7 +107,10 @@ export const POST: RequestHandler = async ({ request }) => {
 
     const userData = userSnap.data() || {};
     if (userData.permissions === "officer") {
-      return json({ ok: false, error: "Officers cannot check in for points." }, { status: 403 });
+      return json(
+        { ok: false, error: "Officers cannot check in for points." },
+        { status: 403 },
+      );
     }
 
     if (!eventSnap.exists) {
@@ -108,22 +119,34 @@ export const POST: RequestHandler = async ({ request }) => {
 
     const eventData = eventSnap.data() || {};
     if (!isLiveNow(eventData as never)) {
-      return json({ ok: false, error: "This event is not currently active." }, { status: 400 });
+      return json(
+        { ok: false, error: "This event is not currently active." },
+        { status: 400 },
+      );
     }
 
     if (!pinSnap.exists || (pinSnap.data()?.pin ?? "").toUpperCase() !== pin) {
-      return json({ ok: false, error: "Incorrect PIN. Please try again." }, { status: 400 });
+      return json(
+        { ok: false, error: "Incorrect PIN. Please try again." },
+        { status: 400 },
+      );
     }
 
     const pointsToAward = Number(eventData.points) || 10;
 
     const result = await db.runTransaction(async (transaction) => {
       const freshUserSnap = await transaction.get(userRef);
-      const freshData = freshUserSnap.exists ? freshUserSnap.data() || {} : {};
+      if (!freshUserSnap.exists) {
+        return { checkedIn: false, error: "Account not found.", status: 404 };
+      }
+      const freshData = freshUserSnap.data() || {};
 
       const attended: string[] = freshData.attendedEvents ?? [];
       if (attended.includes(eventId)) {
-        return { checkedIn: false, error: "You have already checked into this event!" };
+        return {
+          checkedIn: false,
+          error: "You have already checked into this event!",
+        };
       }
 
       const currentPoints = Number(freshData.points) || 0;
@@ -136,12 +159,27 @@ export const POST: RequestHandler = async ({ request }) => {
     });
 
     if (!result.checkedIn) {
-      return json({ ok: false, error: result.error }, { status: 400 });
+      return json(
+        { ok: false, error: result.error },
+        { status: result.status ?? 400 },
+      );
     }
 
-    return json({ ok: true, points: result.points, earned: pointsToAward, title: eventData.title || "" });
+    return json({
+      ok: true,
+      points: result.points,
+      earned: pointsToAward,
+      title: eventData.title || "",
+    });
   } catch (error) {
-    console.error("Check-in failed:", error);
-    return json({ ok: false, error: "Could not check in. Try again." }, { status: 500 });
+    console.error("Check-in failed:", {
+      eventId,
+      uid,
+      error: (error as Error).message || String(error),
+    });
+    return json(
+      { ok: false, error: "Could not check in. Try again." },
+      { status: 500 },
+    );
   }
 };

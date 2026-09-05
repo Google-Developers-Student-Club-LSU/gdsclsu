@@ -87,7 +87,7 @@ export async function signIn(
     if (!userCredential.user.emailVerified) {
       await signOut(auth);
       const error = new Error(
-        "Please check your inbox and verify your email address before logging in.",
+        'Please check your inbox and verify your email address before logging in. If you clicked the link and saw "expired", your email may already be verified — check your status below.',
       ) as Error & { code?: string };
       error.code = "auth/email-not-verified";
       throw error;
@@ -99,6 +99,33 @@ export async function signIn(
       console.error("Error signing in:", error);
     }
     throw error;
+  }
+}
+
+export async function checkVerificationStatus(
+  email: string,
+  password: string,
+): Promise<{ verified: boolean }> {
+  const auth = getAuthInstance();
+  if (!auth) {
+    throw new Error(
+      "Firebase Auth is not available. Check your environment variables.",
+    );
+  }
+
+  try {
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password,
+    );
+    return { verified: userCredential.user.emailVerified };
+  } finally {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Error signing out after checking verification:", error);
+    }
   }
 }
 
@@ -151,20 +178,5 @@ export async function resendVerificationEmail(
     } catch (error) {
       console.error("Error signing out after resending verification:", error);
     }
-  }
-}
-
-export async function logout(): Promise<void> {
-  const auth = getAuthInstance();
-  if (!auth) {
-    throw new Error(
-      "Firebase Auth is not available. Check your environment variables.",
-    );
-  }
-  try {
-    await signOut(auth);
-  } catch (error) {
-    console.error("Error signing out:", error);
-    throw error;
   }
 }

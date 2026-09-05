@@ -48,6 +48,3 @@ hosting/.cache
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# Environment files (local configs)
-/.env.*

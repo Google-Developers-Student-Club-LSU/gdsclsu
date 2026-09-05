@@ -1,7 +1,7 @@
 <div class="fixed inset-0 -z-10 overflow-hidden">
   <div class="stripes-container">
     {#each Array(12) as _, i}
-      <div 
+      <div
         class="stripe"
         style="
           background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
@@ -20,7 +20,7 @@
     transform: rotate(-45deg);
     transform-origin: center;
   }
-  
+
   .stripe {
     position: absolute;
     width: 8%;
@@ -28,7 +28,7 @@
     top: -50%;
     animation: slide-down 15s linear infinite;
   }
-  
+
   @keyframes slide-down {
     0% {
       transform: translateY(-100%);

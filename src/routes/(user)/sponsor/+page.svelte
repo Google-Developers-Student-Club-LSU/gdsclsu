@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import gsap from 'gsap';
+  import { onMount } from "svelte";
+  import gsap from "gsap";
   import GDSCSponsorship from "$lib/assets/GDSCSponsorship.pdf";
 
   let submitting = $state(false);
-  let formError = $state('');
+  let formError = $state("");
   let formSuccess = $state(false);
 
   function downloadBooklet(): void {
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = GDSCSponsorship;
-    link.download = 'sponsorship-booklet.pdf';
+    link.download = "sponsorship-booklet.pdf";
     link.click();
   }
 
@@ -20,44 +20,45 @@
     const data = new FormData(form);
 
     submitting = true;
-    formError = '';
+    formError = "";
     formSuccess = false;
 
     try {
-      const response = await fetch('/api/sponsor-inquiry', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/sponsor-inquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: data.get('name'),
-          company: data.get('company'),
-          email: data.get('email'),
-          message: data.get('message'),
-          website: data.get('website'),
+          name: data.get("name"),
+          company: data.get("company"),
+          email: data.get("email"),
+          message: data.get("message"),
+          website: data.get("website"),
         }),
       });
       const result = await response.json();
 
       if (!response.ok || !result.ok) {
-        formError = result.error || 'Could not send your message. Please try again.';
+        formError =
+          result.error || "Could not send your message. Please try again.";
         return;
       }
 
       form.reset();
       formSuccess = true;
     } catch (error) {
-      console.error('Failed to send sponsor inquiry:', error);
-      formError = 'Could not send your message. Please try again.';
+      console.error("Failed to send sponsor inquiry:", error);
+      formError = "Could not send your message. Please try again.";
     } finally {
       submitting = false;
     }
   }
 
   onMount(() => {
-    const containers = document.querySelectorAll('.fade-container');
-    
+    const containers = document.querySelectorAll(".fade-container");
+
     containers.forEach((container: Element) => {
       gsap.set(container, { autoAlpha: 0, y: 50 });
-      
+
       gsap.to(container, {
         autoAlpha: 1,
         y: 0,
@@ -68,14 +69,23 @@
   });
 </script>
 
-<div class="relative min-h-screen flex flex-col items-center pt-32 pb-20 px-6 overflow-hidden">
-  
+<div
+  class="relative min-h-screen flex flex-col items-center pt-32 pb-20 px-6 overflow-hidden"
+>
   <div class="fade-container w-full max-w-4xl text-center mb-12 relative z-10">
-    <h1 class="text-5xl md:text-7xl font-extrabold mb-6 text-slate-900 dark:text-white tracking-tight">
-      <span class="bg-clip-text text-transparent bg-gradient-to-r from-[#9f86ff] to-[#3b82f6]">Empower the Next</span> Generation.
+    <h1
+      class="text-5xl md:text-7xl font-extrabold mb-6 text-slate-900 dark:text-white tracking-tight"
+    >
+      <span
+        class="bg-clip-text text-transparent bg-gradient-to-r from-[#9f86ff] to-[#3b82f6]"
+        >Empower the Next</span
+      > Generation.
     </h1>
-    <p class="text-xl leading-relaxed text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-      We appreciate your consideration in becoming a sponsor. Review our comprehensive partnership booklet below to see how we can grow together.
+    <p
+      class="text-xl leading-relaxed text-slate-600 dark:text-slate-300 max-w-2xl mx-auto"
+    >
+      We appreciate your consideration in becoming a sponsor. Review our
+      comprehensive partnership booklet below to see how we can grow together.
     </p>
   </div>
 
@@ -84,20 +94,40 @@
       onclick={downloadBooklet}
       class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-[#9f86ff] to-[#8b6fff] text-white font-bold rounded-2xl shadow-lg hover:shadow-[#9f86ff]/30 hover:scale-105 active:scale-95 transition-all"
     >
-      <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+      <svg
+        class="w-6 h-6 mr-3"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+        />
       </svg>
       Download PDF Booklet
     </button>
   </div>
 
-  <div class="fade-container w-full max-w-5xl bg-white dark:bg-slate-800 p-2 md:p-3 rounded-[2rem] shadow-2xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700 relative z-10 mb-32">
-    <div class="bg-slate-100 dark:bg-slate-900 rounded-3xl overflow-hidden relative">
-      <div class="h-10 bg-slate-200 dark:bg-slate-800 flex items-center px-4 gap-2 border-b border-slate-300 dark:border-slate-700">
+  <div
+    class="fade-container w-full max-w-5xl bg-white dark:bg-slate-800 p-2 md:p-3 rounded-[2rem] shadow-2xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700 relative z-10 mb-32"
+  >
+    <div
+      class="bg-slate-100 dark:bg-slate-900 rounded-3xl overflow-hidden relative"
+    >
+      <div
+        class="h-10 bg-slate-200 dark:bg-slate-800 flex items-center px-4 gap-2 border-b border-slate-300 dark:border-slate-700"
+      >
         <div class="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
         <div class="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
         <div class="w-3 h-3 rounded-full bg-[#27c93f]"></div>
-        <div class="mx-auto text-xs font-semibold text-slate-500 dark:text-slate-400">GDSC_Sponsorship_Deck.pdf</div>
+        <div
+          class="mx-auto text-xs font-semibold text-slate-500 dark:text-slate-400"
+        >
+          GDSC_Sponsorship_Deck.pdf
+        </div>
         <div class="w-12"></div>
       </div>
       <iframe
@@ -109,77 +139,168 @@
   </div>
 
   <div class="fade-container w-full max-w-6xl relative z-10 mb-32">
-    <h2 class="text-3xl font-bold text-center text-slate-900 dark:text-white mb-10">Why Partner With Us?</h2>
+    <h2
+      class="text-3xl font-bold text-center text-slate-900 dark:text-white mb-10"
+    >
+      Why Partner With Us?
+    </h2>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-      
-      <div class="bg-slate-50 dark:bg-slate-800/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-700 text-center hover:-translate-y-1 transition-transform">
-        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">Access Top Talent</h3>
-        <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">Connect directly with passionate, driven students who are actively building real-world projects and mastering modern tech stacks.</p>
+      <div
+        class="bg-slate-50 dark:bg-slate-800/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-700 text-center hover:-translate-y-1 transition-transform"
+      >
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">
+          Access Top Talent
+        </h3>
+        <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+          Connect directly with passionate, driven students who are actively
+          building real-world projects and mastering modern tech stacks.
+        </p>
       </div>
 
-      <div class="bg-slate-50 dark:bg-slate-800/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-700 text-center hover:-translate-y-1 transition-transform">
-        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">Brand Visibility</h3>
-        <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">Showcase your company logo at our events, hackathons, and on our digital platforms reaching hundreds of tech enthusiasts.</p>
+      <div
+        class="bg-slate-50 dark:bg-slate-800/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-700 text-center hover:-translate-y-1 transition-transform"
+      >
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">
+          Brand Visibility
+        </h3>
+        <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+          Showcase your company logo at our events, hackathons, and on our
+          digital platforms reaching hundreds of tech enthusiasts.
+        </p>
       </div>
 
-      <div class="bg-slate-50 dark:bg-slate-800/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-700 text-center hover:-translate-y-1 transition-transform">
-        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">Community Impact</h3>
-        <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">Support technical education and help us provide resources, workshops, and opportunities to the next generation of developers.</p>
+      <div
+        class="bg-slate-50 dark:bg-slate-800/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-700 text-center hover:-translate-y-1 transition-transform"
+      >
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">
+          Community Impact
+        </h3>
+        <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+          Support technical education and help us provide resources, workshops,
+          and opportunities to the next generation of developers.
+        </p>
       </div>
-
     </div>
   </div>
 
   <div class="fade-container w-full max-w-4xl relative z-10">
-    <div class="bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-xl border border-slate-100 dark:border-slate-700 p-8 md:p-12">
+    <div
+      class="bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-xl border border-slate-100 dark:border-slate-700 p-8 md:p-12"
+    >
       <div class="text-center mb-10">
-        <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">Ready to Empower the Future?</h2>
-        <p class="text-slate-600 dark:text-slate-400">Leave us a message and our partnership team will get back to you shortly.</p>
+        <h2
+          class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4"
+        >
+          Ready to Empower the Future?
+        </h2>
+        <p class="text-slate-600 dark:text-slate-400">
+          Leave us a message and our partnership team will get back to you
+          shortly.
+        </p>
       </div>
 
       <form onsubmit={handleContactSubmit} class="space-y-6 max-w-2xl mx-auto">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="space-y-2">
-            <label for="name" class="text-sm font-semibold text-slate-700 dark:text-slate-300">Full Name</label>
-            <input type="text" id="name" name="name" required autocomplete="name" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 focus:ring-2 focus:ring-[#9f86ff] focus:border-transparent outline-none transition-all text-slate-800 dark:text-white">
+            <label
+              for="name"
+              class="text-sm font-semibold text-slate-700 dark:text-slate-300"
+              >Full Name</label
+            >
+            <input
+              type="text"
+              id="name"
+              name="name"
+              required
+              autocomplete="name"
+              class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 focus:ring-2 focus:ring-[#9f86ff] focus:border-transparent outline-none transition-all text-slate-800 dark:text-white"
+            />
           </div>
           <div class="space-y-2">
-            <label for="company" class="text-sm font-semibold text-slate-700 dark:text-slate-300">Company</label>
-            <input type="text" id="company" name="company" required autocomplete="organization" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 focus:ring-2 focus:ring-[#9f86ff] focus:border-transparent outline-none transition-all text-slate-800 dark:text-white">
+            <label
+              for="company"
+              class="text-sm font-semibold text-slate-700 dark:text-slate-300"
+              >Company</label
+            >
+            <input
+              type="text"
+              id="company"
+              name="company"
+              required
+              autocomplete="organization"
+              class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 focus:ring-2 focus:ring-[#9f86ff] focus:border-transparent outline-none transition-all text-slate-800 dark:text-white"
+            />
           </div>
         </div>
 
         <div class="space-y-2">
-          <label for="email" class="text-sm font-semibold text-slate-700 dark:text-slate-300">Email</label>
-          <input type="email" id="email" name="email" required autocomplete="email" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 focus:ring-2 focus:ring-[#9f86ff] focus:border-transparent outline-none transition-all text-slate-800 dark:text-white">
+          <label
+            for="email"
+            class="text-sm font-semibold text-slate-700 dark:text-slate-300"
+            >Email</label
+          >
+          <input
+            type="email"
+            id="email"
+            name="email"
+            required
+            autocomplete="email"
+            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 focus:ring-2 focus:ring-[#9f86ff] focus:border-transparent outline-none transition-all text-slate-800 dark:text-white"
+          />
         </div>
 
         <div class="space-y-2">
-          <label for="message" class="text-sm font-semibold text-slate-700 dark:text-slate-300">Message</label>
-          <textarea id="message" name="message" rows="4" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 focus:ring-2 focus:ring-[#9f86ff] focus:border-transparent outline-none transition-all text-slate-800 dark:text-white resize-none"></textarea>
+          <label
+            for="message"
+            class="text-sm font-semibold text-slate-700 dark:text-slate-300"
+            >Message</label
+          >
+          <textarea
+            id="message"
+            name="message"
+            rows="4"
+            required
+            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 focus:ring-2 focus:ring-[#9f86ff] focus:border-transparent outline-none transition-all text-slate-800 dark:text-white resize-none"
+          ></textarea>
         </div>
 
         <div class="hidden" aria-hidden="true">
           <label for="website">Leave this field empty</label>
-          <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+          <input
+            type="text"
+            id="website"
+            name="website"
+            tabindex="-1"
+            autocomplete="off"
+          />
         </div>
 
         {#if formError}
-          <p class="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-medium" role="alert">
+          <p
+            class="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-medium"
+            role="alert"
+          >
             {formError}
           </p>
         {/if}
         {#if formSuccess}
-          <p class="p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 text-sm font-medium" role="status">
-            Thanks for reaching out! Our partnership team will get back to you shortly.
+          <p
+            class="p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 text-sm font-medium"
+            role="status"
+          >
+            Thanks for reaching out! Our partnership team will get back to you
+            shortly.
           </p>
         {/if}
 
-        <button type="submit" disabled={submitting} class="w-full py-4 bg-[#9f86ff] hover:bg-[#8b6fff] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 active:translate-y-0">
-          {submitting ? 'Sending...' : 'Send Message'}
+        <button
+          type="submit"
+          disabled={submitting}
+          class="w-full py-4 bg-[#9f86ff] hover:bg-[#8b6fff] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 active:translate-y-0"
+        >
+          {submitting ? "Sending..." : "Send Message"}
         </button>
       </form>
     </div>
   </div>
-
 </div>

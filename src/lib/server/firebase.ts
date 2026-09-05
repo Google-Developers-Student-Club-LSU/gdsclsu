@@ -1,5 +1,10 @@
 import { mkdirSync, writeFileSync } from "node:fs";
-import { applicationDefault, cert, getApps, initializeApp } from "firebase-admin/app";
+import {
+  applicationDefault,
+  cert,
+  getApps,
+  initializeApp,
+} from "firebase-admin/app";
 import type { App } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import type { Auth } from "firebase-admin/auth";
@@ -23,8 +28,12 @@ function tokenFromRequest(request?: Request): string | undefined {
 
 function writeWifConfig(): boolean {
   if (wifConfigWritten) return true;
-  const { projectNumber, workloadIdentityPoolId, workloadIdentityProviderId, serviceAccountEmail } =
-    gcpConfig;
+  const {
+    projectNumber,
+    workloadIdentityPoolId,
+    workloadIdentityProviderId,
+    serviceAccountEmail,
+  } = gcpConfig;
   if (!projectNumber || !serviceAccountEmail) return false;
   try {
     mkdirSync(WIF_DIR, { recursive: true });
@@ -75,7 +84,10 @@ function adminApp(token?: string): App | null {
 
   if (token && writeWifConfig()) {
     writeToken(token);
-    return initializeApp({ credential: applicationDefault(), projectId: gcpConfig.projectId });
+    return initializeApp({
+      credential: applicationDefault(),
+      projectId: gcpConfig.projectId,
+    });
   }
 
   return null;
