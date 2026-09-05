@@ -204,6 +204,12 @@
 
       if (authState.user) {
         authState.user.points = data.points;
+        if (!authState.user.attendedEvents?.includes(activeEvent.id)) {
+          authState.user.attendedEvents = [
+            ...(authState.user.attendedEvents ?? []),
+            activeEvent.id,
+          ];
+        }
       }
 
       const index = memberList.findIndex(
@@ -350,6 +356,35 @@
             {authState.user?.username}
           </h3>
         </div>
+
+        {#if !authState.isOfficer}
+          <div class="w-full grid grid-cols-2 gap-3 mb-6">
+            <div
+              class="rounded-xl bg-[#9f86ff]/10 border border-[#9f86ff]/20 p-4 text-center"
+            >
+              <div class="text-2xl font-black text-[#9f86ff]">
+                {authState.user?.points ?? 0}
+              </div>
+              <div
+                class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-1"
+              >
+                Points
+              </div>
+            </div>
+            <div
+              class="rounded-xl bg-[#9f86ff]/10 border border-[#9f86ff]/20 p-4 text-center"
+            >
+              <div class="text-2xl font-black text-[#9f86ff]">
+                {authState.user?.attendedEvents?.length ?? 0}
+              </div>
+              <div
+                class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-1"
+              >
+                Events Attended
+              </div>
+            </div>
+          </div>
+        {/if}
       {:else}
         <h2
           class="text-2xl font-bold text-gray-800 dark:text-white mb-6 border-b pb-3 border-slate-200 dark:border-slate-700"

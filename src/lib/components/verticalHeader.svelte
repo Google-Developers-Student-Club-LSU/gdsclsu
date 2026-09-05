@@ -3,7 +3,6 @@
   import { page } from "$app/stores";
   import gdscLogo from "$lib/assets/GDSC.png";
   import { authState } from "$lib/firebase/auth.svelte";
-  import { doc } from "firebase/firestore";
   let openNav = false;
 
   let user = $derived(authState.user);

@@ -4,4 +4,5 @@ export interface User {
   points: number;
   permissions: string;
   claimedEggs?: string[];
+  attendedEvents?: string[];
 }

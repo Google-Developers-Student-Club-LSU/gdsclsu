@@ -155,7 +155,7 @@
         </a>
         <a
           href="/about"
-          class="w-full sm:w-auto px-8 py-4 rounded-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+          class="btn-shine-purple w-full sm:w-auto px-8 py-4 rounded-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-lg border border-slate-200 dark:border-slate-700 transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.03] hover:border-[#9f86ff]/60 hover:bg-slate-50 hover:shadow-[0_10px_30px_-8px_rgba(159,134,255,0.45)] dark:hover:bg-slate-700"
         >
           Learn More
         </a>
@@ -169,7 +169,6 @@
   >
     <div
       class="hub-glow pointer-events-none absolute left-1/2 top-1/2 h-[78%] w-[78%] -translate-x-1/2 -translate-y-1/2 rounded-full"
-      style="animation-duration: 6s"
     ></div>
     <span class="twinkle" style="top: 12%; left: 15%; animation-delay: 0s"
     ></span>
@@ -493,7 +492,6 @@
       rgba(159, 134, 255, 0.3),
       rgba(159, 134, 255, 0) 70%
     );
-    animation: glow-breathe 5s ease-in-out infinite;
   }
 
   .hub-glow {
@@ -502,7 +500,6 @@
       rgba(159, 134, 255, 0.22),
       rgba(159, 134, 255, 0) 68%
     );
-    animation: glow-breathe 6s ease-in-out infinite;
   }
 
   .twinkle {
@@ -549,6 +546,32 @@
     left: 125%;
   }
 
+  .btn-shine-purple {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-shine-purple::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -75%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+      120deg,
+      transparent,
+      rgb(159 134 255 / 0.35),
+      transparent
+    );
+    transform: skewX(-20deg);
+    transition: left 0.6s ease;
+  }
+
+  .btn-shine-purple:hover::after {
+    left: 125%;
+  }
+
   .sat-label {
     position: absolute;
     left: 50%;
@@ -583,6 +606,10 @@
     pointer-events: none;
   }
 
+  .float-y {
+    animation: float-y 4.5s ease-in-out infinite;
+  }
+
   @keyframes float-y {
     0%,
     100% {
@@ -590,18 +617,6 @@
     }
     50% {
       transform: translateY(-7px);
-    }
-  }
-
-  @keyframes glow-breathe {
-    0%,
-    100% {
-      opacity: 0.55;
-      transform: scale(1);
-    }
-    50% {
-      opacity: 0.95;
-      transform: scale(1.07);
     }
   }
 
@@ -632,8 +647,6 @@
   @media (prefers-reduced-motion: reduce) {
     .pulse-ring,
     .float-y,
-    .glow-breathe,
-    .hub-glow,
     .twinkle {
       animation: none;
     }

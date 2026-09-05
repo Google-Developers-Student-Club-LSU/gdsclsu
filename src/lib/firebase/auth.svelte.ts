@@ -14,6 +14,7 @@ interface HeaderUser {
   username: string;
   email: string;
   claimedEggs?: string[];
+  attendedEvents?: string[];
 }
 
 class AuthState {
@@ -56,6 +57,7 @@ class AuthState {
             username: dbUser?.username ?? firebaseUser.displayName ?? "",
             email: firebaseUser.email ?? "",
             claimedEggs: dbUser?.claimedEggs ?? [],
+            attendedEvents: dbUser?.attendedEvents ?? [],
           };
         } catch (error) {
           console.error("Failed to sync user permissions:", error);
@@ -66,6 +68,7 @@ class AuthState {
             username: "",
             email: firebaseUser.email ?? "",
             claimedEggs: [],
+            attendedEvents: [],
           };
         }
       } else {
